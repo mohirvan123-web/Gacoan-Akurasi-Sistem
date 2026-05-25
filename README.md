@@ -4,101 +4,84 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
 
-<title>Gacoan QC System</title>
+<title>Gacoan QC Packer</title>
 
-<script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+<script src="https://cdn.tailwindcss.com"></script>
 
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-
+<!-- ZXING -->
 <script src="https://unpkg.com/@zxing/library@latest"></script>
 
 <style>
-html, body{
+
+html,
+body{
 height:100%;
 overflow:hidden;
-background:#0f172a;
+background:#020617;
+font-family:sans-serif;
 }
 
-.hidden{
-display:none;
-}
-
-#interactive video{
+#scanner video{
 width:100%;
 height:100%;
 object-fit:cover;
-}
-
-.scan-line{
-animation:scan 2s linear infinite;
-}
-
-@keyframes scan{
-0%{transform:translateY(-120px);}
-100%{transform:translateY(120px);}
+border-radius:24px;
 }
 
 .no-scrollbar::-webkit-scrollbar{
 display:none;
 }
+
+.scan-line{
+animation:scanline 2s linear infinite;
+}
+
+@keyframes scanline{
+0%{
+transform:translateY(-120px);
+}
+
+100%{
+transform:translateY(120px);
+}
+}
+
 </style>
 </head>
 
 <body class="h-screen overflow-hidden text-white">
 
-<!-- ROLE -->
-<div id="role-view" class="h-full flex flex-col justify-center items-center px-6 gap-5 bg-slate-950">
+<div class="h-full flex flex-col p-3 gap-3">
 
-<div class="text-center">
-<h1 class="text-3xl font-black">GACOAN QC</h1>
-<p class="text-slate-400 text-sm mt-2">Packing Accuracy System</p>
-</div>
-
-<button onclick="switchRole('packer')"
-class="w-full max-w-xs bg-orange-500 active:scale-95 transition rounded-2xl py-5 font-black text-xl shadow-2xl">
-📦 PACKER
-</button>
-
-<button onclick="switchRole('presenter')"
-class="w-full max-w-xs bg-blue-600 active:scale-95 transition rounded-2xl py-5 font-black text-xl shadow-2xl">
-🖥 PRESENTER
-</button>
-
-</div>
-
-<!-- PACKER -->
-<div id="packer-screen" class="hidden h-full flex flex-col bg-slate-950">
-
-<!-- TOP -->
-<div class="px-4 pt-3 pb-2 flex gap-2">
+<!-- HEADER -->
+<div class="flex gap-2">
 
 <input
 id="customer-name"
-placeholder="Nama Customer / Meja"
-class="flex-1 bg-slate-800 border border-slate-700 rounded-2xl px-4 text-sm outline-none"/>
+type="text"
+placeholder="Nama customer / meja"
+class="flex-1 h-14 rounded-2xl bg-slate-800 border border-slate-700 px-4 outline-none text-sm"/>
 
 <button
 onclick="resetOrder()"
-class="bg-red-500 px-4 rounded-2xl font-bold">
+class="w-24 rounded-2xl bg-red-500 font-bold active:scale-95">
 RESET
 </button>
 
 </div>
 
 <!-- MAIN -->
-<div class="flex-1 flex gap-2 px-3 pb-3 overflow-hidden">
+<div class="flex-1 flex gap-3 overflow-hidden">
 
 <!-- CAMERA -->
-<div class="w-[48%] bg-black rounded-3xl relative overflow-hidden border border-slate-700">
+<div class="w-[48%] relative rounded-3xl overflow-hidden bg-black border border-slate-700">
 
-<div id="interactive" class="w-full h-full">
-<video id="video-preview"></video>
-</div>
+<div id="scanner" class="w-full h-full"></div>
 
-<div class="absolute inset-0 flex items-center justify-center pointer-events-none">
+<!-- SCAN OVERLAY -->
+<div class="absolute inset-0 pointer-events-none flex items-center justify-center">
 
-<div class="w-52 h-40 border-4 border-orange-500 rounded-2xl relative">
+<div class="w-48 h-36 border-4 border-orange-500 rounded-2xl relative overflow-hidden">
 
 <div class="absolute top-0 left-0 w-full h-1 bg-red-500 scan-line"></div>
 
@@ -106,25 +89,38 @@ RESET
 
 </div>
 
+<!-- CAMERA STATUS -->
+<div
+id="camera-status"
+class="absolute bottom-3 left-1/2 -translate-x-1/2 bg-black/70 px-3 py-1 rounded-full text-xs text-white">
+Membuka kamera...
+</div>
+
 </div>
 
 <!-- RIGHT -->
 <div class="flex-1 flex flex-col overflow-hidden">
 
-<!-- HEADER -->
-<div class="bg-slate-800 rounded-2xl px-4 py-3 mb-2">
+<!-- TOP INFO -->
+<div class="bg-slate-800 rounded-3xl p-4 mb-3">
 
 <div class="flex justify-between items-center">
 
 <div>
-<p class="text-xs text-slate-400">TOTAL ITEM</p>
-<h2 id="total-item" class="text-3xl font-black text-orange-400">0</h2>
+<p class="text-xs text-slate-400">
+TOTAL ITEM
+</p>
+
+<h1
+id="total-item"
+class="text-4xl font-black text-orange-400">
+0
+</h1>
 </div>
 
 <button
-id="submit-btn"
 onclick="submitOrder()"
-class="bg-emerald-500 active:scale-95 transition px-5 py-4 rounded-2xl font-black text-lg shadow-xl">
+class="bg-emerald-500 px-5 py-4 rounded-2xl font-black text-lg active:scale-95">
 DONE
 </button>
 
@@ -133,16 +129,17 @@ DONE
 </div>
 
 <!-- MANUAL -->
-<div class="flex gap-2 mb-2">
+<div class="flex gap-2 mb-3">
 
 <input
 id="manual-input"
-placeholder="Barcode manual"
-class="flex-1 bg-slate-800 border border-slate-700 rounded-xl px-3 text-sm outline-none"/>
+type="text"
+placeholder="Input barcode manual"
+class="flex-1 h-12 rounded-2xl bg-slate-800 border border-slate-700 px-4 outline-none text-sm"/>
 
 <button
 onclick="manualAdd()"
-class="bg-orange-500 px-4 rounded-xl font-bold">
+class="w-16 rounded-2xl bg-orange-500 font-black text-xl active:scale-95">
 +
 </button>
 
@@ -153,7 +150,7 @@ class="bg-orange-500 px-4 rounded-xl font-bold">
 id="item-list"
 class="flex-1 overflow-y-auto no-scrollbar space-y-2">
 
-<div class="text-center text-slate-500 text-sm pt-20">
+<div class="text-center text-slate-500 pt-24">
 Belum ada item
 </div>
 
@@ -165,62 +162,11 @@ Belum ada item
 
 </div>
 
-<!-- PRESENTER -->
-<div id="presenter-screen"
-class="hidden h-full bg-slate-950 p-3 overflow-hidden">
-
-<div class="h-full flex flex-col">
-
-<div class="flex justify-between items-center mb-3">
-
-<h1 class="font-black text-2xl">
-📋 MONITOR QC
-</h1>
-
-<div
-id="order-count"
-class="bg-blue-500/20 text-blue-400 px-4 py-2 rounded-xl font-bold">
-0 ORDER
-</div>
-
-</div>
-
-<div
-id="presenter-list"
-class="flex-1 overflow-y-auto no-scrollbar space-y-3">
-
-<div class="text-center text-slate-500 pt-40">
-Belum ada pesanan
-</div>
-
-</div>
-
-</div>
-
-</div>
-
 <script>
 
-/* FIREBASE */
-
-const firebaseConfig = {
-
-apiKey: "YOUR_API_KEY",
-authDomain: "YOUR_DOMAIN",
-databaseURL: "YOUR_DATABASE_URL",
-projectId: "YOUR_PROJECT_ID",
-storageBucket: "YOUR_BUCKET",
-messagingSenderId: "YOUR_SENDER",
-appId: "YOUR_APP_ID"
-
-};
-
-firebase.initializeApp(firebaseConfig);
-
-const db = firebase.database();
-const ordersRef = db.ref("gacoan_active_orders");
-
-/* SKU */
+/* =========================
+SKU DATABASE
+========================= */
 
 const skuDB = {
 
@@ -232,76 +178,103 @@ const skuDB = {
 
 };
 
-/* STATE */
+/* =========================
+STATE
+========================= */
 
-let scanner = null;
+let codeReader = null;
 
 let items = {};
 
-let lastScan = "";
-let lastScanTime = 0;
+let lastScannedCode = "";
+let lastScannedTime = 0;
 
-let submitting = false;
+/* =========================
+START CAMERA
+========================= */
 
-/* ROLE */
+async function startScanner(){
 
-function switchRole(role){
+const status = document.getElementById("camera-status");
 
-document.getElementById("role-view").classList.add("hidden");
+try{
 
-if(role === "packer"){
-
-document.getElementById("packer-screen").classList.remove("hidden");
-
-startScanner();
-
-}else{
-
-document.getElementById("presenter-screen").classList.remove("hidden");
-
-listenPresenter();
-
-}
-
-}
-
-/* SCANNER */
-
-function startScanner(){
+status.innerText = "Mengakses kamera...";
 
 const hints = new Map();
 
 hints.set(
 ZXing.DecodeHintType.POSSIBLE_FORMATS,
 [
-ZXing.BarcodeFormat.CODE_128,
-ZXing.BarcodeFormat.EAN_13
+ZXing.BarcodeFormat.EAN_13,
+ZXing.BarcodeFormat.CODE_128
 ]
 );
 
-scanner = new ZXing.BrowserMultiFormatReader(hints);
+codeReader = new ZXing.BrowserMultiFormatReader(hints);
 
-scanner.decodeFromVideoDevice(
-undefined,
-"video-preview",
+const devices = await ZXing.BrowserCodeReader.listVideoInputDevices();
+
+if(devices.length === 0){
+
+status.innerText = "Kamera tidak ditemukan";
+
+return;
+
+}
+
+/* PRIORITAS KAMERA BELAKANG */
+
+let selectedDeviceId = devices[0].deviceId;
+
+const backCam = devices.find(device => {
+
+const label = device.label.toLowerCase();
+
+return (
+label.includes("back") ||
+label.includes("rear") ||
+label.includes("environment")
+);
+
+});
+
+if(backCam){
+
+selectedDeviceId = backCam.deviceId;
+
+}
+
+status.innerText = "Scanner aktif";
+
+codeReader.decodeFromVideoDevice(
+selectedDeviceId,
+"scanner",
 (result, err)=>{
 
 if(result){
 
-const code = result.text;
+const barcode = result.text;
 const now = Date.now();
 
-if(code === lastScan && now - lastScanTime < 1200){
+/* ANTI DOUBLE SCAN */
+
+if(
+barcode === lastScannedCode &&
+(now - lastScannedTime) < 1200
+){
 return;
 }
 
-lastScan = code;
-lastScanTime = now;
+lastScannedCode = barcode;
+lastScannedTime = now;
 
-addItem(code);
+addItem(barcode);
 
 if(navigator.vibrate){
+
 navigator.vibrate(60);
+
 }
 
 }
@@ -309,13 +282,29 @@ navigator.vibrate(60);
 }
 );
 
+}catch(err){
+
+console.error(err);
+
+status.innerText =
+"Gagal membuka kamera";
+
+alert(
+"Kamera gagal dibuka.\n\nPastikan:\n1. Website HTTPS\n2. Izin kamera diaktifkan\n3. Gunakan Chrome / Safari terbaru"
+);
+
 }
 
-/* ADD ITEM */
+}
+
+/* =========================
+ADD ITEM
+========================= */
 
 function addItem(barcode){
 
-const nama = skuDB[barcode] || "SKU BARU";
+const nama =
+skuDB[barcode] || `SKU ${barcode}`;
 
 if(items[barcode]){
 
@@ -337,37 +326,81 @@ renderItems();
 
 }
 
-/* MANUAL */
+/* =========================
+MANUAL INPUT
+========================= */
 
 function manualAdd(){
 
-const input = document.getElementById("manual-input");
+const input =
+document.getElementById("manual-input");
 
-const code = input.value.trim();
+const barcode = input.value.trim();
 
-if(!code) return;
+if(!barcode) return;
 
-addItem(code);
+addItem(barcode);
 
 input.value = "";
 
 }
 
-/* RENDER */
+/* =========================
+PLUS QTY
+========================= */
+
+function plusQty(barcode){
+
+items[barcode].qty += 1;
+
+renderItems();
+
+}
+
+/* =========================
+MINUS QTY
+========================= */
+
+function minusQty(barcode){
+
+items[barcode].qty -= 1;
+
+if(items[barcode].qty <= 0){
+
+delete items[barcode];
+
+}
+
+renderItems();
+
+}
+
+/* =========================
+RENDER ITEMS
+========================= */
 
 function renderItems(){
 
-const container = document.getElementById("item-list");
+const container =
+document.getElementById("item-list");
 
 const keys = Object.keys(items);
 
-document.getElementById("total-item").innerText =
-keys.reduce((a,b)=>a + items[b].qty,0);
+let total = 0;
+
+keys.forEach(key=>{
+
+total += items[key].qty;
+
+});
+
+document.getElementById("total-item")
+.innerText = total;
 
 if(keys.length === 0){
 
 container.innerHTML = `
-<div class="text-center text-slate-500 text-sm pt-20">
+<div class="text-center text-slate-500 pt-24">
 Belum ada item
 </div>
 `;
@@ -386,15 +419,15 @@ html += `
 
 <div class="bg-slate-800 rounded-2xl p-3">
 
-<div class="flex justify-between items-center">
+<div class="flex justify-between items-center gap-2">
 
-<div>
+<div class="flex-1 min-w-0">
 
-<h3 class="font-bold text-sm">
+<h3 class="font-bold text-sm truncate">
 ${item.nama}
 </h3>
 
-<p class="text-[10px] text-slate-500 mt-1">
+<p class="text-[10px] text-slate-500 mt-1 truncate">
 ${barcode}
 </p>
 
@@ -404,17 +437,17 @@ ${barcode}
 
 <button
 onclick="minusQty('${barcode}')"
-class="w-8 h-8 rounded-lg bg-red-500 font-black">
--
+class="w-10 h-10 rounded-xl bg-red-500 text-xl font-black active:scale-90">
+−
 </button>
 
-<div class="w-8 text-center font-black text-lg">
+<div class="w-8 text-center text-xl font-black">
 ${item.qty}
 </div>
 
 <button
 onclick="plusQty('${barcode}')"
-class="w-8 h-8 rounded-lg bg-emerald-500 font-black">
+class="w-10 h-10 rounded-xl bg-emerald-500 text-xl font-black active:scale-90">
 +
 </button>
 
@@ -432,35 +465,25 @@ container.innerHTML = html;
 
 }
 
-/* QTY */
+/* =========================
+RESET
+========================= */
 
-function plusQty(barcode){
+function resetOrder(){
 
-items[barcode].qty += 1;
+items = {};
 
-renderItems();
-
-}
-
-function minusQty(barcode){
-
-items[barcode].qty -= 1;
-
-if(items[barcode].qty <= 0){
-
-delete items[barcode];
-
-}
+document.getElementById("customer-name").value = "";
 
 renderItems();
 
 }
 
-/* SUBMIT */
+/* =========================
+SUBMIT
+========================= */
 
 function submitOrder(){
-
-if(submitting) return;
 
 const customer =
 document.getElementById("customer-name").value.trim();
@@ -481,165 +504,19 @@ return;
 
 }
 
-submitting = true;
-
-const btn = document.getElementById("submit-btn");
-
-btn.disabled = true;
-
-btn.innerText = "LOADING...";
-
-const orderId = Date.now();
-
-ordersRef.child(orderId).set({
-
-customer,
-timestamp:Date.now(),
-items
-
-}).then(()=>{
-
-resetOrder();
-
-btn.disabled = false;
-btn.innerText = "DONE";
-
-submitting = false;
-
-});
+alert("Siap integrasi Firebase");
 
 }
 
-/* RESET */
+/* =========================
+AUTO START
+========================= */
 
-function resetOrder(){
+window.onload = ()=>{
 
-items = {};
+startScanner();
 
-document.getElementById("customer-name").value = "";
-
-renderItems();
-
-}
-
-/* PRESENTER */
-
-function listenPresenter(){
-
-ordersRef.on("value",(snapshot)=>{
-
-const container =
-document.getElementById("presenter-list");
-
-if(!snapshot.exists()){
-
-container.innerHTML = `
-<div class="text-center text-slate-500 pt-40">
-Belum ada pesanan
-</div>
-`;
-
-document.getElementById("order-count").innerText =
-"0 ORDER";
-
-return;
-
-}
-
-const data = snapshot.val();
-
-const keys = Object.keys(data).reverse();
-
-document.getElementById("order-count").innerText =
-`${keys.length} ORDER`;
-
-let html = "";
-
-keys.forEach(orderId=>{
-
-const order = data[orderId];
-
-let itemHtml = "";
-
-Object.values(order.items).forEach(item=>{
-
-itemHtml += `
-
-<div class="flex justify-between items-center bg-slate-700 rounded-xl px-3 py-2">
-
-<div>
-
-<h4 class="font-bold text-sm">
-${item.nama}
-</h4>
-
-<p class="text-[10px] text-slate-400">
-${item.barcode}
-</p>
-
-</div>
-
-<div class="text-orange-400 font-black text-xl">
-x${item.qty}
-</div>
-
-</div>
-
-`;
-
-});
-
-html += `
-
-<div class="bg-slate-800 rounded-3xl p-4">
-
-<div class="flex justify-between items-start mb-3">
-
-<div>
-
-<h2 class="font-black text-lg">
-👤 ${order.customer}
-</h2>
-
-<p class="text-xs text-slate-400 mt-1">
-${new Date(order.timestamp).toLocaleTimeString('id-ID')}
-</p>
-
-</div>
-
-<button
-onclick="finishOrder('${orderId}')"
-class="bg-emerald-500 px-4 py-2 rounded-xl font-black">
-DONE
-</button>
-
-</div>
-
-<div class="space-y-2">
-
-${itemHtml}
-
-</div>
-
-</div>
-
-`;
-
-});
-
-container.innerHTML = html;
-
-});
-
-}
-
-/* FINISH */
-
-function finishOrder(orderId){
-
-ordersRef.child(orderId).remove();
-
-}
+};
 
 </script>
 
