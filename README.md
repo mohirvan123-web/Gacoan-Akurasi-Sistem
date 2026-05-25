@@ -1,4 +1,3 @@
-<!DOCTYPE html>
 <html lang="id">
 <head>
 
@@ -8,9 +7,12 @@
 name="viewport"
 content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
 
-<title>Gacoan QC Packer</title>
+<title>Gacoan ACC System</title>
 
 <script src="https://cdn.tailwindcss.com"></script>
+
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
 <script src="https://unpkg.com/@zxing/library@latest"></script>
 
@@ -24,14 +26,18 @@ background:#020617;
 font-family:Arial,sans-serif;
 }
 
-#scanner{
-width:100%;
-height:100%;
-object-fit:cover;
+.hidden{
+display:none;
 }
 
 .no-scrollbar::-webkit-scrollbar{
 display:none;
+}
+
+#scanner{
+width:100%;
+height:100%;
+object-fit:cover;
 }
 
 .scan-line{
@@ -60,7 +66,47 @@ button{
 
 <body class="h-screen overflow-hidden text-white">
 
-<div class="h-full flex flex-col p-3 gap-3">
+<!-- ROLE SCREEN -->
+
+<div
+id="role-screen"
+class="h-full flex flex-col justify-center items-center gap-5 px-6 bg-slate-950">
+
+<div class="text-center">
+
+<h1 class="text-4xl font-black">
+GACOAN ACC
+</h1>
+
+<p class="text-slate-400 mt-2">
+Packing Accuracy System
+</p>
+
+</div>
+
+<button
+onclick="openPacker()"
+class="w-full max-w-xs bg-orange-500 py-5 rounded-3xl font-black text-2xl active:scale-95 transition shadow-2xl">
+
+📦 PACKER
+
+</button>
+
+<button
+onclick="openPresenter()"
+class="w-full max-w-xs bg-blue-600 py-5 rounded-3xl font-black text-2xl active:scale-95 transition shadow-2xl">
+
+🖥 PRESENTER
+
+</button>
+
+</div>
+
+<!-- PACKER -->
+
+<div
+id="packer-screen"
+class="hidden h-full flex flex-col p-3 gap-3 bg-slate-950">
 
 <!-- HEADER -->
 
@@ -75,7 +121,9 @@ class="flex-1 rounded-2xl bg-slate-800 border border-slate-700 px-4 outline-none
 <button
 onclick="resetOrder()"
 class="w-24 rounded-2xl bg-red-500 font-bold active:scale-95 transition">
+
 RESET
+
 </button>
 
 </div>
@@ -112,7 +160,9 @@ playsinline
 <div
 id="camera-status"
 class="absolute bottom-3 left-1/2 -translate-x-1/2 bg-black/70 px-3 py-1 rounded-full text-xs">
+
 Membuka kamera...
+
 </div>
 
 </div>
@@ -142,9 +192,12 @@ class="text-4xl font-black text-orange-400">
 </div>
 
 <button
+id="submit-btn"
 onclick="submitOrder()"
 class="bg-emerald-500 px-5 py-4 rounded-2xl font-black text-lg active:scale-95 transition">
+
 DONE
+
 </button>
 
 </div>
@@ -164,12 +217,14 @@ class="flex-1 rounded-2xl bg-slate-800 border border-slate-700 px-4 outline-none
 <button
 onclick="manualAdd()"
 class="w-16 rounded-2xl bg-orange-500 font-black text-xl active:scale-95 transition">
+
 +
+
 </button>
 
 </div>
 
-<!-- LIST -->
+<!-- ITEM LIST -->
 
 <div
 id="item-list"
@@ -187,7 +242,73 @@ Belum ada item
 
 </div>
 
+<!-- PRESENTER -->
+
+<div
+id="presenter-screen"
+class="hidden h-full bg-slate-950 p-3 overflow-hidden">
+
+<div class="h-full flex flex-col">
+
+<!-- HEADER -->
+
+<div class="flex justify-between items-center mb-3">
+
+<h1 class="text-3xl font-black">
+📋 MONITOR QC
+</h1>
+
+<div
+id="order-count"
+class="bg-blue-500/20 text-blue-400 px-4 py-2 rounded-2xl font-bold">
+
+0 ORDER
+
+</div>
+
+</div>
+
+<!-- ORDER LIST -->
+
+<div
+id="presenter-list"
+class="flex-1 overflow-y-auto no-scrollbar space-y-3">
+
+<div class="text-center text-slate-500 pt-40">
+Belum ada pesanan
+</div>
+
+</div>
+
+</div>
+
+</div>
+
 <script>
+
+/* =========================
+FIREBASE
+========================= */
+
+const firebaseConfig = {
+
+apiKey: "ISI_APIKEY_FIREBASE",
+authDomain: "ISI_DOMAIN_FIREBASE",
+databaseURL: "ISI_DATABASE_URL",
+projectId: "ISI_PROJECT_ID",
+storageBucket: "ISI_STORAGE_BUCKET",
+messagingSenderId: "ISI_SENDER_ID",
+appId: "ISI_APP_ID"
+
+};
+
+firebase.initializeApp(firebaseConfig);
+
+const db =
+firebase.database();
+
+const ordersRef =
+db.ref("gacoan_orders");
 
 /* =========================
 SKU DATABASE
@@ -214,6 +335,40 @@ let items = {};
 let lastScannedCode = "";
 let lastScannedTime = 0;
 
+let submitting = false;
+
+/* =========================
+ROLE
+========================= */
+
+function openPacker(){
+
+document
+.getElementById("role-screen")
+.classList.add("hidden");
+
+document
+.getElementById("packer-screen")
+.classList.remove("hidden");
+
+startScanner();
+
+}
+
+function openPresenter(){
+
+document
+.getElementById("role-screen")
+.classList.add("hidden");
+
+document
+.getElementById("presenter-screen")
+.classList.remove("hidden");
+
+listenOrders();
+
+}
+
 /* =========================
 START SCANNER
 ========================= */
@@ -223,48 +378,10 @@ async function startScanner(){
 const status =
 document.getElementById("camera-status");
 
-const video =
-document.getElementById("scanner");
-
 try{
 
 status.innerText =
 "Meminta izin kamera...";
-
-const stream =
-await navigator.mediaDevices.getUserMedia({
-
-video:{
-
-facingMode:{
-ideal:"environment"
-},
-
-width:{
-ideal:1280
-},
-
-height:{
-ideal:720
-}
-
-},
-
-audio:false
-
-});
-
-video.srcObject = stream;
-
-video.setAttribute(
-"playsinline",
-true
-);
-
-await video.play();
-
-status.innerText =
-"Scanner aktif";
 
 const hints = new Map();
 
@@ -279,8 +396,13 @@ ZXing.BarcodeFormat.CODE_128
 codeReader =
 new ZXing.BrowserMultiFormatReader(hints);
 
-codeReader.decodeFromVideoElement(
-video,
+await codeReader.decodeFromConstraints(
+{
+video:{
+facingMode:"environment"
+}
+},
+"scanner",
 (result, err)=>{
 
 if(result){
@@ -316,6 +438,9 @@ navigator.vibrate(50);
 }
 );
 
+status.innerText =
+"Scanner aktif";
+
 }catch(err){
 
 console.error(err);
@@ -324,7 +449,7 @@ status.innerText =
 "Gagal membuka kamera";
 
 alert(
-"Kamera gagal dibuka.\n\nPastikan:\n\n1. Website HTTPS\n2. Izin kamera aktif\n3. Gunakan Chrome/Safari terbaru"
+"Kamera gagal dibuka.\n\nPastikan:\n1. HTTPS aktif\n2. Izin kamera allow\n3. Gunakan Chrome/Safari terbaru"
 );
 
 }
@@ -431,7 +556,8 @@ total += items[key].qty;
 
 });
 
-document.getElementById("total-item")
+document
+.getElementById("total-item")
 .innerText = total;
 
 if(keys.length === 0){
@@ -478,7 +604,9 @@ ${barcode}
 <button
 onclick="minusQty('${barcode}')"
 class="w-10 h-10 rounded-xl bg-red-500 text-xl font-black active:scale-90 transition">
+
 −
+
 </button>
 
 <div class="w-8 text-center text-xl font-black">
@@ -488,7 +616,9 @@ ${item.qty}
 <button
 onclick="plusQty('${barcode}')"
 class="w-10 h-10 rounded-xl bg-emerald-500 text-xl font-black active:scale-90 transition">
+
 +
+
 </button>
 
 </div>
@@ -513,7 +643,8 @@ function resetOrder(){
 
 items = {};
 
-document.getElementById("customer-name")
+document
+.getElementById("customer-name")
 .value = "";
 
 renderItems();
@@ -521,13 +652,16 @@ renderItems();
 }
 
 /* =========================
-SUBMIT
+SUBMIT ORDER
 ========================= */
 
-function submitOrder(){
+async function submitOrder(){
+
+if(submitting) return;
 
 const customer =
-document.getElementById("customer-name")
+document
+.getElementById("customer-name")
 .value
 .trim();
 
@@ -553,31 +687,191 @@ return;
 
 }
 
-console.log({
+submitting = true;
+
+const btn =
+document.getElementById("submit-btn");
+
+btn.disabled = true;
+
+btn.innerText = "LOADING";
+
+const orderId =
+Date.now();
+
+try{
+
+await ordersRef
+.child(orderId)
+.set({
 
 customer,
+timestamp:Date.now(),
 items
 
 });
 
+resetOrder();
+
+}catch(err){
+
 alert(
-"Pesanan siap dikirim ke Firebase"
+"Gagal submit order"
+);
+
+console.error(err);
+
+}
+
+btn.disabled = false;
+
+btn.innerText = "DONE";
+
+submitting = false;
+
+}
+
+/* =========================
+LISTEN ORDERS
+========================= */
+
+function listenOrders(){
+
+ordersRef.on(
+"value",
+(snapshot)=>{
+
+const container =
+document.getElementById(
+"presenter-list"
+);
+
+if(!snapshot.exists()){
+
+container.innerHTML = `
+
+<div class="text-center text-slate-500 pt-40">
+Belum ada pesanan
+</div>
+
+`;
+
+document
+.getElementById("order-count")
+.innerText = "0 ORDER";
+
+return;
+
+}
+
+const data =
+snapshot.val();
+
+const keys =
+Object.keys(data)
+.reverse();
+
+document
+.getElementById("order-count")
+.innerText =
+`${keys.length} ORDER`;
+
+let html = "";
+
+keys.forEach(orderId=>{
+
+const order =
+data[orderId];
+
+let itemHtml = "";
+
+Object.values(order.items)
+.forEach(item=>{
+
+itemHtml += `
+
+<div class="bg-slate-700 rounded-2xl px-3 py-2 flex justify-between items-center">
+
+<div>
+
+<h3 class="font-bold text-sm">
+${item.nama}
+</h3>
+
+<p class="text-[10px] text-slate-400">
+${item.barcode}
+</p>
+
+</div>
+
+<div class="text-orange-400 font-black text-2xl">
+x${item.qty}
+</div>
+
+</div>
+
+`;
+
+});
+
+html += `
+
+<div class="bg-slate-800 rounded-3xl p-4">
+
+<div class="flex justify-between items-start mb-3">
+
+<div>
+
+<h2 class="font-black text-lg">
+👤 ${order.customer}
+</h2>
+
+<p class="text-xs text-slate-400 mt-1">
+${new Date(order.timestamp).toLocaleTimeString('id-ID')}
+</p>
+
+</div>
+
+<button
+onclick="finishOrder('${orderId}')"
+class="bg-emerald-500 px-4 py-2 rounded-2xl font-black active:scale-95 transition">
+
+DONE
+
+</button>
+
+</div>
+
+<div class="space-y-2">
+
+${itemHtml}
+
+</div>
+
+</div>
+
+`;
+
+});
+
+container.innerHTML = html;
+
+}
 );
 
 }
 
 /* =========================
-AUTO START
+FINISH ORDER
 ========================= */
 
-window.addEventListener(
-"load",
-()=>{
+function finishOrder(orderId){
 
-startScanner();
+ordersRef
+.child(orderId)
+.remove();
 
 }
-);
 
 </script>
 
