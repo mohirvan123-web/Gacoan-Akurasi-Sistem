@@ -2,113 +2,192 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Gacoan AKURASI SISTEM</title>
+    <title>Gacoan Delivery & QC System</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
-    <script src="https://unpkg.com/html5-qrcode"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <script type="text/javascript" src="https://unpkg.com/@zxing/library@latest"></script>
     <style>
         .hidden { display: none; }
-        input[type=number]::-webkit-inner-spin-button, 
-        input[type=number]::-webkit-outer-spin-button { 
-            -webkit-appearance: none; margin: 0; 
+        /* Memastikan video kamera responsif dan pas di dalam kotak */
+        #interactive video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 1rem;
         }
     </style>
 </head>
-<body class="bg-gray-900 text-white min-h-screen flex flex-col justify-between antialiased select-none">
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col justify-between antialiased font-sans">
 
-    <header class="bg-gray-800/90 backdrop-blur-md border-b border-gray-700 px-4 py-4 sticky top-0 z-50 flex items-center justify-between shadow-lg">
-        <div class="flex items-center space-x-3">
-            <div id="status-indicator" class="w-3 h-3 bg-gray-500 rounded-full"></div>
-            <div>
-                <h1 class="text-sm font-bold tracking-wider text-gray-100" id="app-title">GACOAN AKURASI SISTEM</h1>
-                <p class="text-[10px] text-gray-400 font-medium uppercase tracking-wider" id="app-subtitle">Silakan Pilih Peran</p>
-            </div>
+    <div class="bg-blue-700 text-white px-5 pt-2 pb-1 flex justify-between items-center text-xs font-semibold tracking-wider">
+        <span id="live-clock">09:41</span>
+        <div class="flex space-x-1.5 items-center">
+            <span>📶</span><span>🔋</span>
         </div>
-        <button id="btn-back" onclick="goBack()" class="hidden bg-gray-700 hover:bg-gray-600 active:scale-95 text-xs font-semibold px-3 py-1.5 rounded-xl border border-gray-600 transition">
-            ← Menu
-        </button>
-    </header>
+    </div>
 
-    <main class="flex-grow flex flex-col p-4 max-w-md mx-auto w-full justify-center">
+    <main class="flex-grow flex flex-col max-w-md mx-auto w-full bg-white shadow-xl overflow-hidden relative">
         
-        <div id="menu-view" class="space-y-4 w-full">
-            <button onclick="switchView('packer')" class="w-full bg-linear-to-br from-amber-500 to-orange-600 text-white font-bold py-5 px-6 rounded-2xl shadow-xl flex flex-col items-center border border-orange-400/20">
-                <span class="text-2xl mb-1">📦</span>
-                <span class="text-lg tracking-wide">TIM PACKER</span>
-                <span class="text-[11px] font-normal opacity-80 mt-0.5">(Multi-Qty & Scan Mode)</span>
-            </button>
-            
-            <button onclick="switchView('presenter')" class="w-full bg-linear-to-br from-blue-500 to-indigo-600 text-white font-bold py-5 px-6 rounded-2xl shadow-xl flex flex-col items-center border border-blue-400/20">
-                <span class="text-2xl mb-1">💁‍♂️</span>
-                <span class="text-lg tracking-wide">TIM PRESENTER</span>
-                <span class="text-[11px] font-normal opacity-80 mt-0.5">(Validasi & Kroscek)</span>
-            </button>
+        <div id="role-view" class="p-6 flex flex-col justify-center items-center my-auto space-y-6 w-full">
+            <div class="text-center space-y-2">
+                <div class="w-16 h-16 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-3xl mx-auto shadow-sm">📦</div>
+                <h2 class="text-xl font-extrabold text-slate-900 tracking-wide">GACOAN acc SYSTEM</h2>
+                <p class="text-xs text-slate-500 max-w-[250px] mx-auto">Pilih stasiun kerja Anda untuk memulai manajemen pesanan keluar.</p>
+            </div>
+            <div class="w-full space-y-3">
+                <button onclick="switchRole('packer')" class="w-full bg-blue-600 hover:bg-blue-700 active:scale-98 text-white font-bold py-4 rounded-xl transition shadow-md">
+                    <span>📦 TIM PACKER</span>
+                </button>
+                <button onclick="switchRole('presenter')" class="w-full bg-slate-800 hover:bg-slate-900 active:scale-98 text-white font-bold py-4 rounded-xl transition shadow-md">
+                    <span>💁‍♂️ TIM PRESENTER (MONITOR)</span>
+                </button>
+            </div>
         </div>
 
-        <div id="packer-view" class="hidden w-full space-y-4">
+        <div id="packer-master-container" class="hidden flex-grow flex flex-col">
             
-            <div id="camera-box" class="relative w-full aspect-square bg-black rounded-3xl overflow-hidden border-2 border-gray-700 shadow-2xl">
-                <div id="interactive" class="w-full h-full object-cover"></div>
-                
-                <div class="absolute inset-0 pointer-events-none flex flex-col justify-between p-10">
-                    <div class="flex justify-between"><div class="w-8 h-8 border-t-4 border-l-4 border-orange-500 rounded-tl-lg"></div><div class="w-8 h-8 border-t-4 border-r-4 border-orange-500 rounded-tr-lg"></div></div>
-                    <div class="w-full h-0.5 bg-orange-500 opacity-60 shadow-[0_0_8px_#f97316] animate-bounce"></div>
-                    <div class="flex justify-between"><div class="w-8 h-8 border-b-4 border-l-4 border-orange-500 rounded-bl-lg"></div><div class="w-8 h-8 border-b-4 border-r-4 border-orange-500 rounded-br-lg"></div></div>
+            <div id="packer-step-1" class="flex-grow flex flex-col justify-between p-5">
+                <div class="space-y-6">
+                    <div class="space-y-1">
+                        <h2 class="text-2xl font-black text-slate-900 tracking-tight">Pesanan Keluar</h2>
+                        <p class="text-xs text-slate-400 font-medium">Track pesanan barang keluar / menu gacoan</p>
+                    </div>
+
+                    <div class="bg-slate-50 border border-slate-200 rounded-2xl p-4 space-y-4 shadow-xs">
+                        <div class="flex items-center space-x-2 text-blue-600 font-bold text-sm">
+                            <span>👤</span> <span>Data Pemesan</span>
+                        </div>
+                        <div class="space-y-1.5">
+                            <label class="text-xs font-bold text-slate-500">Nama Customer / Pemesan</label>
+                            <input type="text" id="cust-name-input" placeholder="Masukkan nama customer / nomor meja" class="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-blue-500 shadow-xs">
+                        </div>
+                        <div class="space-y-1.5">
+                            <label class="text-xs font-bold text-slate-500">Catatan (Opsional)</label>
+                            <textarea id="cust-note-input" rows="3" placeholder="Masukkan catatan jika ada" class="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-blue-500 resize-none shadow-xs"></textarea>
+                        </div>
+                    </div>
                 </div>
-                <div class="absolute top-4 left-1/2 transform -translate-x-1/2 bg-black/70 backdrop-blur-sm px-4 py-1 rounded-full text-[11px] font-medium tracking-wider text-gray-300">
-                    Scan Barcode Produk
-                </div>
+
+                <button onclick="packerGoToStep2()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl shadow-lg flex items-center justify-center space-x-2 transition mt-4">
+                    <span>LANJUT KE SCAN</span> <span>→</span>
+                </button>
             </div>
 
-            <div id="qty-box" class="hidden bg-gray-800 border-2 border-orange-500 rounded-3xl p-5 shadow-2xl space-y-5 animate-fadeIn">
-                <div class="text-center">
-                    <span class="text-[10px] bg-orange-500/20 text-orange-400 font-bold px-3 py-1 rounded-full border border-orange-500/30 tracking-widest uppercase">PRODUK TERKUNCI</span>
-                    <h2 id="active-product-name" class="text-2xl font-extrabold text-white mt-2 tracking-wide">Nama Produk</h2>
-                    <p id="active-barcode" class="text-xs text-gray-400 font-mono mt-0.5">SKU: -</p>
+            <div id="packer-step-2" class="hidden flex-grow flex flex-col justify-between p-4 space-y-4">
+                <div class="bg-slate-50 border border-slate-200 rounded-xl p-3 flex justify-between items-center shadow-xs">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center text-xs font-bold">👤</div>
+                        <div>
+                            <p class="text-[10px] text-slate-400 font-bold uppercase tracking-tight">Customer</p>
+                            <h4 id="display-cust-name" class="text-sm font-bold text-slate-800">-</h4>
+                        </div>
+                    </div>
+                    <button onclick="packerBackToStep1()" class="text-xs font-bold text-blue-600 bg-blue-50 border border-blue-200 px-3 py-1.5 rounded-lg hover:bg-blue-100">GANTI</button>
                 </div>
 
-                <div class="flex items-center justify-center space-x-4 py-2">
-                    <button onclick="adjustQty(-1)" class="w-14 h-14 bg-gray-700 hover:bg-gray-600 active:scale-90 rounded-2xl text-2xl font-bold transition flex items-center justify-center select-none shadow-md">-</button>
-                    <input type="number" id="input-qty" value="1" min="1" class="w-24 h-14 bg-gray-900 border border-gray-700 rounded-2xl text-center text-2xl font-black text-orange-400 focus:outline-none focus:border-orange-500 shadow-inner">
-                    <button onclick="adjustQty(1)" class="w-14 h-14 bg-gray-700 hover:bg-gray-600 active:scale-90 rounded-2xl text-2xl font-bold transition flex items-center justify-center select-none shadow-md">+</button>
+                <div class="relative w-full aspect-[4/3] bg-black rounded-2xl overflow-hidden border border-slate-200 shadow-md">
+                    <div id="interactive" class="w-full h-full">
+                        <video id="video-preview"></video>
+                    </div>
+                    
+                    <div class="absolute inset-0 pointer-events-none flex flex-col justify-between p-6 z-10">
+                        <div class="flex justify-between">
+                            <div class="w-6 h-6 border-t-4 border-l-4 border-blue-600 rounded-tl-sm"></div>
+                            <div class="w-6 h-6 border-t-4 border-r-4 border-blue-600 rounded-tr-sm"></div>
+                        </div>
+                        <div class="w-full h-0.5 bg-red-500 opacity-90 shadow-[0_0_8px_#ef4444] animate-pulse"></div>
+                        <div class="flex justify-between">
+                            <div class="w-6 h-6 border-b-4 border-l-4 border-blue-600 rounded-bl-sm"></div>
+                            <div class="w-6 h-6 border-b-4 border-r-4 border-blue-600 rounded-br-sm"></div>
+                        </div>
+                    </div>
                 </div>
 
-                <div class="pt-2">
-                    <button onclick="submitProductToFirebase()" class="w-full bg-linear-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 active:scale-95 text-white font-black py-4 rounded-xl transition shadow-xl tracking-wider text-base flex items-center justify-center space-x-2">
-                        <span>📥</span> <span>ADD / PINDAH MENU</span>
+                <div class="flex items-center space-x-2 text-xs text-slate-400 font-bold justify-center">
+                    <div class="h-px bg-slate-200 w-full"></div>
+                    <span>atau</span>
+                    <div class="h-px bg-slate-200 w-full"></div>
+                </div>
+
+                <div class="flex space-x-2">
+                    <input type="text" id="manual-barcode-input" placeholder="Input barcode manual" class="flex-grow bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-xs focus:outline-none focus:border-blue-500">
+                    <button onclick="addBarcodeManual()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs px-4 rounded-xl transition uppercase tracking-wider">TAMBAH</button>
+                </div>
+
+                <div class="flex-grow flex flex-col min-h-[150px] max-h-[220px]">
+                    <div class="flex justify-between items-center mb-1.5 px-1">
+                        <span class="text-xs font-bold text-slate-700" id="packer-list-count">Daftar Item (0)</span>
+                        <button onclick="clearPackerTempList()" class="text-[10px] font-bold text-red-500 hover:underline">🗑 HAPUS SEMUA</button>
+                    </div>
+                    <div id="packer-temp-list" class="flex-grow overflow-y-auto border border-slate-100 rounded-xl divide-y divide-slate-100 bg-slate-50/50 p-2 space-y-1.5">
+                        <p class="text-xs text-slate-400 text-center py-8 italic">Belum ada item yang di-scan.</p>
+                    </div>
+                </div>
+
+                <button onclick="packerGoToStep3()" class="w-full bg-blue-700 hover:bg-blue-800 text-white font-bold py-3.5 rounded-xl shadow-md flex items-center justify-center space-x-2 text-sm transition">
+                    <span>LANJUT KE SUBMIT</span> <span>→</span>
+                </button>
+            </div>
+
+            <div id="packer-step-3" class="hidden flex-grow flex flex-col justify-between p-5 space-y-4">
+                <div class="space-y-5 flex-grow overflow-y-auto pr-1">
+                    <div class="text-center space-y-1.5 py-4">
+                        <div class="w-12 h-12 bg-green-100 text-green-600 rounded-full flex items-center justify-center text-xl mx-auto shadow-xs">✓</div>
+                        <h3 class="text-lg font-extrabold text-slate-900">Pesanan Berhasil Disubmit!</h3>
+                        <p class="text-xs text-slate-400 font-medium">Data pesanan telah tersimpan ke monitor presenter.</p>
+                    </div>
+
+                    <div class="bg-slate-50 border border-slate-200 rounded-2xl p-4 space-y-3 shadow-xs text-xs">
+                        <h4 class="font-bold text-slate-700 border-b border-slate-200 pb-1.5 text-sm">Ringkasan Pesanan</h4>
+                        <div class="flex justify-between"><span class="text-slate-400 font-medium">Customer</span><span class="font-bold text-slate-800" id="summary-cust-name">-</span></div>
+                        <div class="flex justify-between"><span class="text-slate-400 font-medium">Waktu Mulai</span><span class="font-semibold text-slate-700" id="summary-time">-</span></div>
+                        <div class="flex justify-between"><span class="text-slate-400 font-medium">Total Item</span><span class="font-bold text-blue-600" id="summary-total-item">0 Barcode</span></div>
+                        <div class="flex justify-between items-center"><span class="text-slate-400 font-medium">Status</span><span class="bg-green-100 text-green-700 font-bold px-2 py-0.5 rounded-md border border-green-200 text-[10px]">SELESAI</span></div>
+                    </div>
+
+                    <div class="space-y-2">
+                        <h4 class="text-xs font-bold text-slate-600 px-1">Daftar Barcode</h4>
+                        <div id="summary-barcode-list" class="divide-y divide-slate-100 border border-slate-100 rounded-xl p-2 bg-white max-h-48 overflow-y-auto space-y-1"></div>
+                    </div>
+                </div>
+
+                <div class="space-y-2 pt-2">
+                    <button onclick="resetToNewOrder()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3.5 rounded-xl shadow-md text-sm transition">
+                        ➕ PESANAN BARU
                     </button>
                 </div>
             </div>
-
-            <div class="bg-gray-800/50 border border-gray-800 rounded-2xl p-4">
-                <p class="text-xs font-bold text-gray-400 tracking-wider uppercase mb-2">Log Scan Terakhir Anda:</p>
-                <div id="packer-log-text" class="text-sm font-medium text-gray-300 italic">Belum ada menu yang dikirim.</div>
-            </div>
         </div>
 
-        <div id="presenter-view" class="hidden w-full flex flex-col space-y-4">
-            <div class="bg-gray-800 border border-gray-700 rounded-2xl p-4 shadow-lg flex-grow flex flex-col min-h-[350px]">
-                <h2 class="text-sm font-bold text-gray-400 uppercase tracking-wider mb-3 border-b border-gray-700 pb-2 flex justify-between items-center">
-                    <span>Daftar Menu Masuk</span>
-                    <span id="item-counter" class="bg-blue-500/10 text-blue-400 text-xs px-2 py-0.5 rounded-md border border-blue-500/20">0 Jenis</span>
-                </h2>
-                
-                <div id="presenter-list" class="divide-y divide-gray-700 overflow-y-auto pr-1 flex-grow space-y-1">
-                    <p class="text-gray-500 text-center py-10 text-sm">Menunggu Tim Packer memasukkan produk...</p>
+        <div id="presenter-master-container" class="hidden flex-grow flex flex-col p-4 space-y-4">
+            <div class="bg-slate-800 text-white border border-slate-700 rounded-2xl p-4 shadow-lg flex-grow flex flex-col min-h-[400px]">
+                <div class="border-b border-slate-700 pb-3 mb-3 flex justify-between items-center">
+                    <div>
+                        <h2 class="text-sm font-black tracking-wide text-slate-300 uppercase">MONITOR ANTRIAN PACKING</h2>
+                        <p class="text-[10px] text-slate-400 font-medium">Real-time Sinkronisasi Mie Gacoan</p>
+                    </div>
+                    <span id="presenter-order-count" class="bg-blue-500/20 text-blue-400 text-xs font-bold px-2.5 py-1 rounded-md border border-blue-500/30">0 Pesanan</span>
+                </div>
+                <div id="presenter-live-orders" class="flex-grow overflow-y-auto space-y-4 pr-1">
+                    <p class="text-slate-500 text-center py-20 text-sm italic">Belum ada pesanan masuk dari Tim Packer...</p>
                 </div>
             </div>
-
-            <button onclick="resetOrder()" class="w-full bg-red-600/20 hover:bg-red-600 text-red-400 hover:text-white border border-red-500/20 font-semibold py-3.5 rounded-xl transition active:scale-98 shadow-md text-sm">
-                Clear / Pesanan Selesai
+            <button onclick="location.reload()" class="w-full bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold py-3 rounded-xl transition text-xs border border-slate-300">
+                ← KEMBALI KE SELEKSI ROLE
             </button>
         </div>
 
     </main>
 
-    <footer class="bg-gray-950/40 p-3 text-center text-[10px] text-gray-500 border-t border-gray-800 tracking-wider">
-        MIE GACOAN QC LOGISTICS • SINGOSARI
-    </footer>
+    <div class="bg-white border-t border-slate-200 px-6 py-3 max-w-md mx-auto w-full flex justify-around items-center shadow-lg text-slate-400 text-[11px] font-bold">
+        <button onclick="location.reload()" class="flex flex-col items-center space-y-1 text-blue-600">
+            <span class="text-xl">📋</span>
+            <span>Pesanan Keluar</span>
+        </button>
+        <button onclick="alert('Fitur Riwayat dalam pengembangan')" class="flex flex-col items-center space-y-1 hover:text-slate-600 transition">
+            <span class="text-xl">📁</span>
+            <span>Riwayat</span>
+        </button>
+    </div>
 
     <script>
         // 1. FIREBASE CONFIG
@@ -124,202 +203,260 @@
         
         firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
-        const orderRef = database.ref('current_order');
+        const rootOrdersRef = database.ref('gacoan_active_orders');
 
-        // SKU Database Mie Gacoan
-        const gacoanMenu = {
-            "89910011": "Mie Suit",
-            "89910022": "Mie Hompimpa Lvl 1",
-            "89910023": "Mie Hompimpa Lvl 2",
-            "89910033": "Mie Gacoan Lvl 1",
-            "89910034": "Mie Gacoan Lvl 2",
-            "89920011": "Siomay (Isi 3)",
-            "89920022": "Udang Keju (Isi 3)",
-            "89920033": "Udang Rambutan (Isi 3)",
-            "89930011": "Es Gobak Sodor",
-            "89930022": "Es Teklek"
+        // Master Database SKU Gacoan
+        const gacoanSKUDatabase = {
+            "8991000012345": "Mie Gacoan Lvl 1",
+            "8991000056789": "Mie Hompimpa Lvl 3",
+            "8991000098765": "Udang Keju (Isi 3)",
+            "8992000011111": "Udang Rambutan",
+            "8993000022222": "Es Gobak Sodor"
         };
 
-        let html5QrCode = null;
-        let currentScannedItem = null; // Menyimpan data produk yang sedang aktif di-scan
+        let codeReader = null;
+        let packerTempItems = []; 
+        let currentCustomerName = "";
+        let currentCustomerNote = "";
+        let lastScannedCode = "";
+        let lastScannedTime = 0;
 
-        // 2. NAVIGATION SYSTEMS
-        function switchView(view) {
-            document.getElementById('menu-view').classList.add('hidden');
-            document.getElementById('packer-view').classList.add('hidden');
-            document.getElementById('presenter-view').classList.add('hidden');
-            document.getElementById('btn-back').classList.remove('hidden');
+        // Jam Live digital bagian atas
+        setInterval(() => {
+            const now = new Date();
+            document.getElementById('live-clock').innerText = now.toLocaleTimeString('id-ID', {hour: '2-digit', minute:'2-digit'});
+        }, 1000);
 
-            const indicator = document.getElementById('status-indicator');
-
-            if (view === 'packer') {
-                document.getElementById('packer-view').classList.remove('hidden');
-                document.getElementById('app-title').innerText = "STASIUN PACKER";
-                document.getElementById('app-subtitle').innerText = "Mode Input Cepat (Scan + Qty)";
-                indicator.className = "w-3 h-3 bg-amber-500 rounded-full animate-pulse";
-                resetPackerUI(); // Pastikan kamera menyala di awal
-            } else if (view === 'presenter') {
-                document.getElementById('presenter-view').classList.remove('hidden');
-                document.getElementById('app-title').innerText = "STASIUN PRESENTER";
-                document.getElementById('app-subtitle').innerText = "Validasi & Crosscheck Mode";
-                indicator.className = "w-3 h-3 bg-blue-500 rounded-full animate-pulse";
-                stopScanner();
-                listenToDatabase();
+        function switchRole(role) {
+            document.getElementById('role-view').classList.add('hidden');
+            if (role === 'packer') {
+                document.getElementById('packer-master-container').classList.remove('hidden');
+            } else if (role === 'presenter') {
+                document.getElementById('presenter-master-container').classList.remove('hidden');
+                listenToPresenterDatabase();
             }
         }
 
-        function goBack() {
-            document.getElementById('menu-view').classList.remove('hidden');
-            document.getElementById('packer-view').classList.add('hidden');
-            document.getElementById('presenter-view').classList.add('hidden');
-            document.getElementById('btn-back').classList.add('hidden');
-            document.getElementById('app-title').innerText = "GACOAN QC SYSTEM";
-            document.getElementById('app-subtitle').innerText = "Silakan Pilih Peran";
-            document.getElementById('status-indicator').className = "w-3 h-3 bg-gray-500 rounded-full";
-            stopScanner();
-            orderRef.off();
-        }
-
-        // 3. PACKER CONTROLLER (SCAN + MULTI QTY LOGIC)
-        function startHighSpeedScanner() {
-            if (!html5QrCode) {
-                html5QrCode = new Html5Qrcode("interactive");
-                const config = {
-                    fps: 25, // Dioptimalkan lebih cepat lagi
-                    qrbox: function(width, height) { return { width: width * 0.85, height: height * 0.4 }; },
-                    aspectRatio: 1.0,
-                    experimentalFeatures: { useBarCodeDetectorIfSupported: true }
-                };
-                html5QrCode.start({ facingMode: "environment" }, config, onScanSuccess).catch(err => console.error(err));
+        function packerGoToStep2() {
+            const name = document.getElementById('cust-name-input').value.trim();
+            if (!name) {
+                alert("Harap masukkan Nama Customer / No. Meja!");
+                return;
             }
-        }
-
-        function stopScanner() {
-            if (html5QrCode) {
-                html5QrCode.stop().then(() => { html5QrCode = null; }).catch(err => console.log(err));
-            }
-        }
-
-        function onScanSuccess(decodedText, decodedResult) {
-            // Haptic Feedback (Vibrasi Pendek) tanda barcode masuk
-            if (navigator.vibrate) navigator.vibrate(60);
-
-            const namaMenu = gacoanMenu[decodedText] || "Menu Baru (" + decodedText + ")";
+            currentCustomerName = name;
+            currentCustomerNote = document.getElementById('cust-note-input').value.trim();
             
-            // Simpan produk yang berhasil discan ke variabel temporary
-            currentScannedItem = {
-                barcode: decodedText,
-                nama: namaMenu
-            };
-
-            // Matikan kamera terlebih dahulu agar HP tidak panas dan hemat baterai saat input angka Qty
-            html5QrCode.stop().then(() => {
-                html5QrCode = null;
-                
-                // Switch UI: Sembunyikan kamera, munculkan kotak Qty
-                document.getElementById('camera-box').classList.add('hidden');
-                document.getElementById('qty-box').classList.remove('hidden');
-
-                // Set isi informasi produk aktif
-                document.getElementById('active-product-name').innerText = namaMenu;
-                document.getElementById('active-barcode').innerText = `SKU: ${decodedText}`;
-                document.getElementById('input-qty').value = 1; // Default qty = 1
-            }).catch(err => console.log(err));
+            document.getElementById('display-cust-name').innerText = currentCustomerName;
+            document.getElementById('packer-step-1').classList.add('hidden');
+            document.getElementById('packer-step-2').classList.remove('hidden');
+            
+            startZXing1DScanner();
         }
 
-        // Fungsi Tombol + dan -
-        function adjustQty(amount) {
-            const qtyInput = document.getElementById('input-qty');
-            let currentVal = parseInt(qtyInput.value) || 1;
-            currentVal += amount;
-            if (currentVal < 1) currentVal = 1;
-            qtyInput.value = currentVal;
+        function packerBackToStep1() {
+            stopZXingScanner();
+            document.getElementById('packer-step-2').classList.add('hidden');
+            document.getElementById('packer-step-1').classList.remove('hidden');
         }
 
-        // Fungsi Tombol "ADD / PINDAH MENU" (Kirim Data Berdasarkan Qty yang ditentukan)
-        function submitProductToFirebase() {
-            if (!currentScannedItem) return;
+        // ================= KUNCI UTAMA SINKRONISASI BARCODE GARIS (1D) DECODER =================
+        function startZXing1DScanner() {
+            // Menggunakan BrowserBarcodeReader khusus untuk tipe Barcode Garis (1D)
+            codeReader = new ZXing.BrowserBarcodeReader();
+            
+            codeReader.decodeFromVideoDevice(undefined, 'video-preview', (result, err) => {
+                if (result) {
+                    const code = result.text;
+                    const now = Date.now();
 
-            const finalQty = parseInt(document.getElementById('input-qty').value) || 1;
+                    // Mencegah scan ganda berturut-turut untuk item yang sama (Cooldown 1.5 detik)
+                    if (code === lastScannedCode && (now - lastScannedTime) < 1500) {
+                        return;
+                    }
 
-            // Push ke Firebase sebanyak jumlah Qty yang diinput secara simultan
-            for (let i = 0; i < finalQty; i++) {
-                orderRef.push({
-                    barcode: currentScannedItem.barcode,
-                    nama: currentScannedItem.nama,
-                    timestamp: firebase.database.ServerValue.TIMESTAMP
-                });
+                    lastScannedCode = code;
+                    lastScannedTime = now;
+
+                    if (navigator.vibrate) navigator.vibrate(80); // Beri efek getar di HP
+                    
+                    insertItemToTempList(code);
+                }
+                if (err && !(err instanceof ZXing.NotFoundException)) {
+                    console.error("Kesalahan Sensor Kamera:", err);
+                }
+            }).catch(err => {
+                console.error("Gagal Mengakses Hardware Kamera:", err);
+                alert("Kamera gagal diakses. Pastikan Anda berada di jaringan aman (HTTPS / GitHub Pages).");
+            });
+        }
+
+        function stopZXingScanner() {
+            if (codeReader) {
+                codeReader.reset();
+                codeReader = null;
+            }
+        }
+
+        function addBarcodeManual() {
+            const codeInput = document.getElementById('manual-barcode-input');
+            const code = codeInput.value.trim();
+            if (code) {
+                insertItemToTempList(code);
+                codeInput.value = "";
+            }
+        }
+
+        function insertItemToTempList(barcodeStr) {
+            const timeStr = new Date().toLocaleTimeString('id-ID', {hour: '2-digit', minute:'2-digit', second:'2-digit'});
+            const namaMenu = gacoanSKUDatabase[barcodeStr] || "SKU Baru (" + barcodeStr + ")";
+            
+            packerTempItems.push({
+                barcode: barcodeStr,
+                nama: namaMenu,
+                waktu: timeStr
+            });
+            renderPackerTempList();
+        }
+
+        function removeSingleTempItem(index) {
+            packerTempItems.splice(index, 1);
+            renderPackerTempList();
+        }
+
+        function clearPackerTempList() {
+            packerTempItems = [];
+            renderPackerTempList();
+        }
+
+        function renderPackerTempList() {
+            const listContainer = document.getElementById('packer-temp-list');
+            document.getElementById('packer-list-count').innerText = `Daftar Item (${packerTempItems.length})`;
+            
+            if (packerTempItems.length === 0) {
+                listContainer.innerHTML = '<p class="text-xs text-slate-400 text-center py-8 italic">Belum ada item yang di-scan.</p>';
+                return;
+            }
+            
+            listContainer.innerHTML = "";
+            packerTempItems.forEach((item, index) => {
+                listContainer.innerHTML += `
+                    <div class="bg-white border border-slate-100 rounded-xl p-3 flex justify-between items-center shadow-2xs">
+                        <div>
+                            <p class="text-xs font-bold text-slate-800">${item.nama}</p>
+                            <p class="text-[10px] text-slate-400 font-mono mt-0.5">${item.waktu} • Code: ${item.barcode}</p>
+                        </div>
+                        <button onclick="removeSingleTempItem(${index})" class="text-slate-300 hover:text-red-500 font-bold px-2 text-sm transition">×</button>
+                    </div>
+                `;
+            });
+        }
+
+        function packerGoToStep3() {
+            if (packerTempItems.length === 0) {
+                alert("Daftar item kosong! Harap scan minimal 1 produk.");
+                return;
             }
 
-            // Update Log singkat di bawah untuk Packer
-            document.getElementById('packer-log-text').innerText = `✔ Terkirim: ${currentScannedItem.nama} (x${finalQty})`;
+            stopZXingScanner(); // Matikan kamera agar menghemat baterai HP tim dapur
 
-            // Beri getar dua kali tanda sukses terkirim ke sistem
-            if (navigator.vibrate) navigator.vibrate([40, 40, 40]);
+            const timeFinal = new Date().toLocaleDateString('id-ID', {day: 'numeric', month: 'short', year: 'numeric'}) + ' ' + new Date().toLocaleTimeString('id-ID', {hour:'2-digit', minute:'2-digit'});
 
-            // Reset tampilan ke kamera lagi untuk scan menu berikutnya
-            resetPackerUI();
+            rootOrdersRef.push({
+                customer: currentCustomerName,
+                catatan: currentCustomerNote,
+                waktuMulai: timeFinal,
+                items: packerTempItems
+            });
+
+            document.getElementById('summary-cust-name').innerText = currentCustomerName;
+            document.getElementById('summary-time').innerText = timeFinal;
+            document.getElementById('summary-total-item').innerText = `${packerTempItems.length} Barcode`;
+
+            const summaryList = document.getElementById('summary-barcode-list');
+            summaryList.innerHTML = "";
+            packerTempItems.forEach((item, index) => {
+                summaryList.innerHTML += `
+                    <div class="flex items-center justify-between py-2 text-xs">
+                        <div class="flex items-center space-x-2">
+                            <span class="w-4 h-4 bg-emerald-50 text-emerald-600 font-bold rounded-sm text-[10px] flex items-center justify-center">${index + 1}</span>
+                            <span class="font-bold text-slate-800">${item.nama}</span>
+                        </div>
+                        <span class="text-slate-400 font-mono text-[10px]">${item.waktu}</span>
+                    </div>
+                `;
+            });
+
+            document.getElementById('packer-step-2').classList.add('hidden');
+            document.getElementById('packer-step-3').classList.remove('hidden');
         }
 
-        function resetPackerUI() {
-            currentScannedItem = null;
-            document.getElementById('qty-box').classList.add('hidden');
-            document.getElementById('camera-box').classList.remove('hidden');
-            startHighSpeedScanner();
+        function resetToNewOrder() {
+            packerTempItems = [];
+            document.getElementById('cust-name-input').value = "";
+            document.getElementById('cust-note-input').value = "";
+            document.getElementById('packer-step-3').classList.add('hidden');
+            document.getElementById('packer-step-1').classList.remove('hidden');
         }
 
-        // 4. PRESENTER CONTROLLER (CHECKLIST SINKRONISASI)
-        function listenToDatabase() {
-            orderRef.on('value', (snapshot) => {
-                const listContainer = document.getElementById('presenter-list');
-                listContainer.innerHTML = '';
+        // ================= MONITOR REAL-TIME SINKRONISASI PRESENTER =================
+        function listenToPresenterDatabase() {
+            rootOrdersRef.on('value', (snapshot) => {
+                const container = document.getElementById('presenter-live-orders');
+                container.innerHTML = "";
 
                 if (snapshot.exists()) {
-                    const data = snapshot.val();
-                    const summary = {};
-                    let totalJenis = 0;
+                    const allOrders = snapshot.val();
+                    let count = 0;
 
-                    Object.keys(data).forEach(key => {
-                        const item = data[key];
-                        if (summary[item.nama]) {
-                            summary[item.nama].qty += 1;
-                        } else {
-                            summary[item.nama] = { 
-                                qty: 1, 
-                                time: new Date(item.timestamp).toLocaleTimeString('id-ID', {hour: '2-digit', minute:'2-digit'}) 
-                            };
-                            totalJenis++;
-                        }
-                    });
+                    Object.keys(allOrders).forEach(orderId => {
+                        const order = allOrders[orderId];
+                        count++;
 
-                    document.getElementById('item-counter').innerText = `${totalJenis} Jenis`;
+                        const itemSummary = {};
+                        order.items.forEach(it => {
+                            itemSummary[it.nama] = (itemSummary[it.nama] || 0) + 1;
+                        });
 
-                    Object.keys(summary).forEach(menuName => {
-                        const item = summary[menuName];
-                        listContainer.innerHTML += `
-                            <label class="flex items-center justify-between py-4 px-2 hover:bg-gray-700/30 rounded-xl transition cursor-pointer select-none">
-                                <div class="flex items-center space-x-3.5">
-                                    <input type="checkbox" class="w-6 h-6 text-blue-600 bg-gray-700 border-gray-600 rounded-lg accent-blue-500">
-                                    <span class="text-sm font-bold text-gray-200">${menuName}</span>
+                        let itemsHtml = "";
+                        Object.keys(itemSummary).forEach(name => {
+                            itemsHtml += `
+                                <label class="flex items-center justify-between py-2 px-1 hover:bg-slate-700/50 rounded-lg cursor-pointer transition">
+                                    <div class="flex items-center space-x-2.5">
+                                        <input type="checkbox" class="w-4 h-4 text-blue-600 bg-slate-700 border-slate-600 rounded focus:ring-0 accent-blue-500">
+                                        <span class="text-xs font-semibold text-slate-200">${name}</span>
+                                    </div>
+                                    <span class="bg-blue-500 text-white font-black text-[11px] px-2.5 py-0.5 rounded-md">x${itemSummary[name]}</span>
+                                </label>
+                            `;
+                        });
+
+                        container.innerHTML += `
+                            <div class="bg-slate-700/40 border border-slate-700 rounded-xl p-3.5 space-y-2.5">
+                                <div class="flex justify-between items-start border-b border-slate-700 pb-2">
+                                    <div>
+                                        <h3 class="text-sm font-black text-white tracking-wide">👤 ${order.customer}</h3>
+                                        <p class="text-[10px] text-slate-400 mt-0.5">⏱ ${order.waktuMulai} ${order.catatan ? '• 📝 ' + order.catatan : ''}</p>
+                                    </div>
+                                    <button onclick="clearSingleOrder('${orderId}')" class="text-[10px] bg-emerald-600 hover:bg-emerald-700 text-white px-2 py-1 rounded-md font-bold transition shadow-xs">DONE / SERAHKAN</button>
                                 </div>
-                                <div class="flex items-center space-x-3">
-                                    <span class="bg-red-500 text-white font-black px-3 py-1 rounded-lg text-sm shadow-md">
-                                        x${item.qty}
-                                    </span>
+                                <div class="divide-y divide-slate-800/40 space-y-1">
+                                    ${itemsHtml}
                                 </div>
-                            </label>
+                            </div>
                         `;
                     });
+
+                    document.getElementById('presenter-order-count').innerText = `${count} Pesanan`;
                 } else {
-                    document.getElementById('item-counter').innerText = '0 Jenis';
-                    listContainer.innerHTML = '<p class="text-gray-500 text-center py-10 text-sm">Belum ada item yang di-scan.</p>';
+                    document.getElementById('presenter-order-count').innerText = '0 Pesanan';
+                    container.innerHTML = '<p class="text-slate-500 text-center py-20 text-sm italic">Belum ada pesanan masuk dari Tim Packer...</p>';
                 }
             });
         }
 
-        function resetOrder() {
-            if (confirm("Apakah pesanan ini sudah selesai dicek dan ingin dikosongkan untuk pesanan berikutnya?")) {
-                orderRef.set(null);
+        function clearSingleOrder(orderId) {
+            if (confirm("Serahkan pesanan dan hapus dari monitor antrian?")) {
+                rootOrdersRef.child(orderId).remove();
             }
         }
     </script>
