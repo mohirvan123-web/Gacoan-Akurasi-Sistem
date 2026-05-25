@@ -1,14 +1,17 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+
+<meta charset="UTF-8"/>
+
+<meta
+name="viewport"
+content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
 
 <title>Gacoan QC Packer</title>
 
 <script src="https://cdn.tailwindcss.com"></script>
 
-<!-- ZXING -->
 <script src="https://unpkg.com/@zxing/library@latest"></script>
 
 <style>
@@ -18,14 +21,13 @@ body{
 height:100%;
 overflow:hidden;
 background:#020617;
-font-family:sans-serif;
+font-family:Arial,sans-serif;
 }
 
-#scanner video{
+#scanner{
 width:100%;
 height:100%;
 object-fit:cover;
-border-radius:24px;
 }
 
 .no-scrollbar::-webkit-scrollbar{
@@ -37,6 +39,7 @@ animation:scanline 2s linear infinite;
 }
 
 @keyframes scanline{
+
 0%{
 transform:translateY(-120px);
 }
@@ -44,9 +47,15 @@ transform:translateY(-120px);
 100%{
 transform:translateY(120px);
 }
+
+}
+
+button{
+-webkit-tap-highlight-color:transparent;
 }
 
 </style>
+
 </head>
 
 <body class="h-screen overflow-hidden text-white">
@@ -54,31 +63,40 @@ transform:translateY(120px);
 <div class="h-full flex flex-col p-3 gap-3">
 
 <!-- HEADER -->
-<div class="flex gap-2">
+
+<div class="flex gap-2 h-14">
 
 <input
 id="customer-name"
 type="text"
 placeholder="Nama customer / meja"
-class="flex-1 h-14 rounded-2xl bg-slate-800 border border-slate-700 px-4 outline-none text-sm"/>
+class="flex-1 rounded-2xl bg-slate-800 border border-slate-700 px-4 outline-none text-sm"/>
 
 <button
 onclick="resetOrder()"
-class="w-24 rounded-2xl bg-red-500 font-bold active:scale-95">
+class="w-24 rounded-2xl bg-red-500 font-bold active:scale-95 transition">
 RESET
 </button>
 
 </div>
 
 <!-- MAIN -->
+
 <div class="flex-1 flex gap-3 overflow-hidden">
 
 <!-- CAMERA -->
+
 <div class="w-[48%] relative rounded-3xl overflow-hidden bg-black border border-slate-700">
 
-<div id="scanner" class="w-full h-full"></div>
+<video
+id="scanner"
+autoplay
+muted
+playsinline
+></video>
 
-<!-- SCAN OVERLAY -->
+<!-- OVERLAY -->
+
 <div class="absolute inset-0 pointer-events-none flex items-center justify-center">
 
 <div class="w-48 h-36 border-4 border-orange-500 rounded-2xl relative overflow-hidden">
@@ -89,24 +107,28 @@ RESET
 
 </div>
 
-<!-- CAMERA STATUS -->
+<!-- STATUS -->
+
 <div
 id="camera-status"
-class="absolute bottom-3 left-1/2 -translate-x-1/2 bg-black/70 px-3 py-1 rounded-full text-xs text-white">
+class="absolute bottom-3 left-1/2 -translate-x-1/2 bg-black/70 px-3 py-1 rounded-full text-xs">
 Membuka kamera...
 </div>
 
 </div>
 
 <!-- RIGHT -->
+
 <div class="flex-1 flex flex-col overflow-hidden">
 
-<!-- TOP INFO -->
+<!-- TOP -->
+
 <div class="bg-slate-800 rounded-3xl p-4 mb-3">
 
 <div class="flex justify-between items-center">
 
 <div>
+
 <p class="text-xs text-slate-400">
 TOTAL ITEM
 </p>
@@ -116,11 +138,12 @@ id="total-item"
 class="text-4xl font-black text-orange-400">
 0
 </h1>
+
 </div>
 
 <button
 onclick="submitOrder()"
-class="bg-emerald-500 px-5 py-4 rounded-2xl font-black text-lg active:scale-95">
+class="bg-emerald-500 px-5 py-4 rounded-2xl font-black text-lg active:scale-95 transition">
 DONE
 </button>
 
@@ -129,28 +152,30 @@ DONE
 </div>
 
 <!-- MANUAL -->
-<div class="flex gap-2 mb-3">
+
+<div class="flex gap-2 mb-3 h-12">
 
 <input
 id="manual-input"
 type="text"
 placeholder="Input barcode manual"
-class="flex-1 h-12 rounded-2xl bg-slate-800 border border-slate-700 px-4 outline-none text-sm"/>
+class="flex-1 rounded-2xl bg-slate-800 border border-slate-700 px-4 outline-none text-sm"/>
 
 <button
 onclick="manualAdd()"
-class="w-16 rounded-2xl bg-orange-500 font-black text-xl active:scale-95">
+class="w-16 rounded-2xl bg-orange-500 font-black text-xl active:scale-95 transition">
 +
 </button>
 
 </div>
 
-<!-- ITEM LIST -->
+<!-- LIST -->
+
 <div
 id="item-list"
 class="flex-1 overflow-y-auto no-scrollbar space-y-2">
 
-<div class="text-center text-slate-500 pt-24">
+<div class="text-center text-slate-500 pt-24 text-sm">
 Belum ada item
 </div>
 
@@ -190,16 +215,56 @@ let lastScannedCode = "";
 let lastScannedTime = 0;
 
 /* =========================
-START CAMERA
+START SCANNER
 ========================= */
 
 async function startScanner(){
 
-const status = document.getElementById("camera-status");
+const status =
+document.getElementById("camera-status");
+
+const video =
+document.getElementById("scanner");
 
 try{
 
-status.innerText = "Mengakses kamera...";
+status.innerText =
+"Meminta izin kamera...";
+
+const stream =
+await navigator.mediaDevices.getUserMedia({
+
+video:{
+
+facingMode:{
+ideal:"environment"
+},
+
+width:{
+ideal:1280
+},
+
+height:{
+ideal:720
+}
+
+},
+
+audio:false
+
+});
+
+video.srcObject = stream;
+
+video.setAttribute(
+"playsinline",
+true
+);
+
+await video.play();
+
+status.innerText =
+"Scanner aktif";
 
 const hints = new Map();
 
@@ -211,51 +276,20 @@ ZXing.BarcodeFormat.CODE_128
 ]
 );
 
-codeReader = new ZXing.BrowserMultiFormatReader(hints);
+codeReader =
+new ZXing.BrowserMultiFormatReader(hints);
 
-const devices = await ZXing.BrowserCodeReader.listVideoInputDevices();
-
-if(devices.length === 0){
-
-status.innerText = "Kamera tidak ditemukan";
-
-return;
-
-}
-
-/* PRIORITAS KAMERA BELAKANG */
-
-let selectedDeviceId = devices[0].deviceId;
-
-const backCam = devices.find(device => {
-
-const label = device.label.toLowerCase();
-
-return (
-label.includes("back") ||
-label.includes("rear") ||
-label.includes("environment")
-);
-
-});
-
-if(backCam){
-
-selectedDeviceId = backCam.deviceId;
-
-}
-
-status.innerText = "Scanner aktif";
-
-codeReader.decodeFromVideoDevice(
-selectedDeviceId,
-"scanner",
+codeReader.decodeFromVideoElement(
+video,
 (result, err)=>{
 
 if(result){
 
-const barcode = result.text;
-const now = Date.now();
+const barcode =
+result.text;
+
+const now =
+Date.now();
 
 /* ANTI DOUBLE SCAN */
 
@@ -273,7 +307,7 @@ addItem(barcode);
 
 if(navigator.vibrate){
 
-navigator.vibrate(60);
+navigator.vibrate(50);
 
 }
 
@@ -290,7 +324,7 @@ status.innerText =
 "Gagal membuka kamera";
 
 alert(
-"Kamera gagal dibuka.\n\nPastikan:\n1. Website HTTPS\n2. Izin kamera diaktifkan\n3. Gunakan Chrome / Safari terbaru"
+"Kamera gagal dibuka.\n\nPastikan:\n\n1. Website HTTPS\n2. Izin kamera aktif\n3. Gunakan Chrome/Safari terbaru"
 );
 
 }
@@ -304,7 +338,8 @@ ADD ITEM
 function addItem(barcode){
 
 const nama =
-skuDB[barcode] || `SKU ${barcode}`;
+skuDB[barcode] ||
+`SKU ${barcode}`;
 
 if(items[barcode]){
 
@@ -335,7 +370,8 @@ function manualAdd(){
 const input =
 document.getElementById("manual-input");
 
-const barcode = input.value.trim();
+const barcode =
+input.value.trim();
 
 if(!barcode) return;
 
@@ -384,7 +420,8 @@ function renderItems(){
 const container =
 document.getElementById("item-list");
 
-const keys = Object.keys(items);
+const keys =
+Object.keys(items);
 
 let total = 0;
 
@@ -400,9 +437,11 @@ document.getElementById("total-item")
 if(keys.length === 0){
 
 container.innerHTML = `
-<div class="text-center text-slate-500 pt-24">
+
+<div class="text-center text-slate-500 pt-24 text-sm">
 Belum ada item
 </div>
+
 `;
 
 return;
@@ -413,7 +452,8 @@ let html = "";
 
 keys.forEach(barcode=>{
 
-const item = items[barcode];
+const item =
+items[barcode];
 
 html += `
 
@@ -437,7 +477,7 @@ ${barcode}
 
 <button
 onclick="minusQty('${barcode}')"
-class="w-10 h-10 rounded-xl bg-red-500 text-xl font-black active:scale-90">
+class="w-10 h-10 rounded-xl bg-red-500 text-xl font-black active:scale-90 transition">
 −
 </button>
 
@@ -447,7 +487,7 @@ ${item.qty}
 
 <button
 onclick="plusQty('${barcode}')"
-class="w-10 h-10 rounded-xl bg-emerald-500 text-xl font-black active:scale-90">
+class="w-10 h-10 rounded-xl bg-emerald-500 text-xl font-black active:scale-90 transition">
 +
 </button>
 
@@ -473,7 +513,8 @@ function resetOrder(){
 
 items = {};
 
-document.getElementById("customer-name").value = "";
+document.getElementById("customer-name")
+.value = "";
 
 renderItems();
 
@@ -486,25 +527,42 @@ SUBMIT
 function submitOrder(){
 
 const customer =
-document.getElementById("customer-name").value.trim();
+document.getElementById("customer-name")
+.value
+.trim();
 
 if(!customer){
 
-alert("Masukkan nama customer");
+alert(
+"Masukkan nama customer"
+);
 
 return;
 
 }
 
-if(Object.keys(items).length === 0){
+if(
+Object.keys(items).length === 0
+){
 
-alert("Item kosong");
+alert(
+"Belum ada item"
+);
 
 return;
 
 }
 
-alert("Siap integrasi Firebase");
+console.log({
+
+customer,
+items
+
+});
+
+alert(
+"Pesanan siap dikirim ke Firebase"
+);
 
 }
 
@@ -512,11 +570,14 @@ alert("Siap integrasi Firebase");
 AUTO START
 ========================= */
 
-window.onload = ()=>{
+window.addEventListener(
+"load",
+()=>{
 
 startScanner();
 
-};
+}
+);
 
 </script>
 
