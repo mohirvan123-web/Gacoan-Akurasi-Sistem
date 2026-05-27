@@ -48,10 +48,6 @@ transform:scale(.92);
 
 <body class="h-screen overflow-hidden text-white">
 
-<!-- =========================
-ROLE SCREEN
-========================= -->
-
 <div
 id="role-screen"
 class="h-full flex flex-col justify-center items-center gap-5 px-6 bg-slate-950">
@@ -86,15 +82,9 @@ class="tap-btn w-full max-w-xs bg-blue-600 py-5 rounded-3xl font-black text-2xl 
 
 </div>
 
-<!-- =========================
-PACKER SCREEN
-========================= -->
-
 <div
 id="packer-screen"
 class="hidden h-full flex flex-col bg-slate-950 p-3 gap-3 overflow-hidden">
-
-<!-- TOP -->
 
 <div class="flex gap-2 h-14">
 
@@ -113,8 +103,6 @@ RESET
 </button>
 
 </div>
-
-<!-- SUMMARY -->
 
 <div class="bg-slate-800 rounded-3xl p-4 flex justify-between items-center border border-slate-700">
 
@@ -143,8 +131,6 @@ DONE
 
 </div>
 
-<!-- MENU -->
-
 <div
 id="menu-grid"
 class="flex-1 overflow-y-auto no-scrollbar grid grid-cols-2 gap-3 pb-2">
@@ -153,17 +139,11 @@ class="flex-1 overflow-y-auto no-scrollbar grid grid-cols-2 gap-3 pb-2">
 
 </div>
 
-<!-- =========================
-PRESENTER SCREEN
-========================= -->
-
 <div
 id="presenter-screen"
 class="hidden h-full bg-slate-950 p-3 overflow-hidden">
 
 <div class="h-full flex flex-col">
-
-<!-- HEADER -->
 
 <div class="flex justify-between items-center mb-3">
 
@@ -180,8 +160,6 @@ class="bg-blue-500/20 text-blue-400 px-4 py-2 rounded-2xl font-bold">
 </div>
 
 </div>
-
-<!-- ORDER LIST -->
 
 <div
 id="presenter-list"
@@ -200,10 +178,8 @@ Belum ada pesanan
 <script>
 
 /* =========================
-FIREBASE
+FIREBASE (Sudah Diperbaiki)
 ========================= */
-
-const firebaseConfig = {
 
 const firebaseConfig = {
   apiKey: "AIzaSyCbfeWmArHKHXWxhr5p9c756vl5KrJ9pUE",
@@ -218,11 +194,8 @@ const firebaseConfig = {
 
 firebase.initializeApp(firebaseConfig);
 
-const db =
-firebase.database();
-
-const ordersRef =
-db.ref("gacoan_orders");
+const db = firebase.database();
+const ordersRef = db.ref("gacoan_orders");
 
 /* =========================
 MENU SIMULASI
@@ -308,7 +281,7 @@ new Audio(
 
 audio.volume = 0.15;
 
-audio.play();
+audio.play().catch(err => console.log("Audio play blocked or error:", err));
 
 }
 
