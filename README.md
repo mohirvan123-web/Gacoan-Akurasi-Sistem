@@ -1,130 +1,336 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-
 <meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"/>
-
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
 <title>Gacoan ACC System</title>
-
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
 <style>
-html, body {
-  height: 100dvh;
-  background: #090d16;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-  -webkit-tap-highlight-color: transparent;
-  position: fixed;
-  width: 100%;
-  overflow: hidden;
-}
+  /* ---- Reset & base ---- */
+  *, *::before, *::after { box-sizing: border-box; }
 
-.hidden { display: none !important; }
-.no-scrollbar::-webkit-scrollbar { display: none; }
-button { user-select: none; }
+  :root {
+    --orange: #f97316;
+    --amber:  #f59e0b;
+    --emerald:#10b981;
+    --blue:   #3b82f6;
+    --bg:     #090d16;
+    --surface:#111827;
+    --border: #1f2937;
+    --text:   #f1f5f9;
+    --muted:  #64748b;
+    --safe-top:    env(safe-area-inset-top,    0px);
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
+    --safe-left:   env(safe-area-inset-left,   0px);
+    --safe-right:  env(safe-area-inset-right,  0px);
+  }
 
-/* Feedback sentuhan premium yang halus */
-.tap-btn {
-  transition: all 0.1s cubic-bezier(0.4, 0, 0.2, 1);
-}
-.tap-btn:active {
-  transform: scale(0.95);
-  opacity: 0.85;
-}
+  html {
+    /* Penting: pakai height 100% bukan 100dvh di root, biar iOS tidak kacau */
+    height: 100%;
+    background: var(--bg);
+  }
 
-.scroll-smooth-touch {
-  -webkit-overflow-scrolling: touch;
-}
+  body {
+    margin: 0;
+    min-height: 100%;
+    /* TIDAK menggunakan position:fixed — ini yang bikin scroll mati */
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif;
+    -webkit-tap-highlight-color: transparent;
+    -webkit-text-size-adjust: 100%;
+    overscroll-behavior: none;
+  }
 
-/* Safe Area untuk poni iOS / lubang kamera Android */
-.safe-p {
-  padding-top: max(12px, env(safe-area-inset-top));
-  padding-bottom: max(12px, env(safe-area-inset-bottom));
-  padding-left: max(12px, env(safe-area-inset-left));
-  padding-right: max(12px, env(safe-area-inset-right));
-}
+  /* ---- Screen management ---- */
+  .screen {
+    display: none;
+    min-height: 100dvh;              /* dynamic viewport height — iOS 15.4+ */
+    min-height: -webkit-fill-available; /* fallback older Safari */
+  }
+  .screen.active { display: flex; flex-direction: column; }
+
+  /* ---- Safe-area padding utility ---- */
+  .pt-safe { padding-top: max(16px, env(safe-area-inset-top)); }
+  .pb-safe { padding-bottom: max(16px, env(safe-area-inset-bottom)); }
+  .px-safe {
+    padding-left:  max(16px, env(safe-area-inset-left));
+    padding-right: max(16px, env(safe-area-inset-right));
+  }
+
+  /* ---- Scrollable container — kunci utama fix scroll ---- */
+  .scroll-area {
+    flex: 1 1 0;          /* ambil sisa ruang */
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch; /* momentum scroll iOS */
+    overscroll-behavior-y: contain;
+  }
+
+  /* ---- Tap feedback ---- */
+  .tap {
+    -webkit-user-select: none; user-select: none;
+    cursor: pointer;
+    transition: transform .1s ease, opacity .1s ease;
+  }
+  .tap:active { transform: scale(.94); opacity: .82; }
+
+  /* ---- No scrollbar ---- */
+  .scroll-area::-webkit-scrollbar { display: none; }
+  .scroll-area { scrollbar-width: none; }
+
+  /* ---- Menu card ---- */
+  .menu-card {
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    border-radius: 18px;
+    padding: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    transition: border-color .15s, box-shadow .15s;
+    min-height: 140px;
+  }
+  .menu-card.active {
+    border-color: rgba(249,115,22,.5);
+    box-shadow: 0 0 0 1px rgba(249,115,22,.15), 0 8px 20px rgba(249,115,22,.08);
+  }
+
+  /* ---- Badge pill ---- */
+  .badge {
+    display: inline-flex; align-items: center;
+    padding: 2px 10px;
+    border-radius: 999px;
+    font-size: 10px; font-weight: 800;
+    letter-spacing: .07em; text-transform: uppercase;
+  }
+
+  /* ---- Qty counter ---- */
+  .qty-btn {
+    width: 40px; height: 40px;
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px; font-weight: 800;
+    background: var(--border);
+    border: none; outline: none;
+  }
+
+  /* ---- Order card (monitor) ---- */
+  .order-card {
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    border-radius: 20px;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  /* ---- Item row inside order card ---- */
+  .item-row {
+    background: rgba(9,13,22,.5);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 10px 14px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  /* ---- Spinner ---- */
+  .spinner {
+    width: 18px; height: 18px;
+    border: 2px solid rgba(255,255,255,.2);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: spin .7s linear infinite;
+    display: inline-block; vertical-align: middle; margin-right: 6px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ---- Toast ---- */
+  #toast {
+    position: fixed;
+    bottom: calc(20px + env(safe-area-inset-bottom));
+    left: 50%; transform: translateX(-50%) translateY(80px);
+    background: #1a2332;
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 12px 22px;
+    border-radius: 999px;
+    font-size: 13px; font-weight: 700;
+    box-shadow: 0 8px 32px rgba(0,0,0,.5);
+    z-index: 9999;
+    transition: transform .3s cubic-bezier(.22,1,.36,1), opacity .3s;
+    opacity: 0; pointer-events: none;
+    white-space: nowrap;
+  }
+  #toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+
+  /* ---- Responsive grid ---- */
+  .menu-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+  @media (min-width: 480px)  { .menu-grid { grid-template-columns: repeat(3, 1fr); } }
+  @media (min-width: 720px)  { .menu-grid { grid-template-columns: repeat(4, 1fr); } }
+
+  /* ---- Header sticky (packer & presenter) ---- */
+  .sticky-header {
+    position: sticky; top: 0; z-index: 10;
+    background: var(--bg);
+  }
+
+  /* ---- Input ---- */
+  input[type=text] {
+    background: #0d1421;
+    border: 1.5px solid var(--border);
+    border-radius: 14px;
+    padding: 11px 16px;
+    color: var(--text);
+    font-size: 15px; font-weight: 600;
+    outline: none;
+    width: 100%;
+    transition: border-color .15s;
+    -webkit-appearance: none;
+    appearance: none;
+  }
+  input[type=text]::placeholder { color: var(--muted); font-weight: 500; }
+  input[type=text]:focus { border-color: var(--orange); }
 </style>
-
 </head>
-<body class="text-slate-100 selection:bg-orange-500/30">
+<body>
 
-<div id="role-screen" class="h-full flex flex-col justify-center items-center gap-4 px-6 bg-[#090d16]">
-  <div class="text-center mb-6">
-    <h1 class="text-4xl font-black tracking-tighter bg-gradient-to-r from-orange-500 to-amber-500 bg-clip-text text-transparent">
-      GACOAN ACC
-    </h1>
-    <p class="text-slate-500 text-xs font-semibold tracking-widest mt-1 uppercase">
-      Packing Accuracy System
-    </p>
-  </div>
+<!-- ===================== ROLE SCREEN ===================== -->
+<div id="role-screen" class="screen active" style="justify-content:center;align-items:center;padding:24px;">
+  <div style="width:100%;max-width:340px;display:flex;flex-direction:column;align-items:center;gap:20px;">
 
-  <button onclick="openPacker()" class="tap-btn w-full max-w-xs bg-orange-500 hover:bg-orange-600 py-4 rounded-2xl font-black text-lg shadow-lg shadow-orange-500/10 tracking-wide text-white">
-    📦 INTERFAS PACKER
-  </button>
-
-  <button onclick="openPresenter()" class="tap-btn w-full max-w-xs bg-blue-600 hover:bg-blue-700 py-4 rounded-2xl font-black text-lg shadow-lg shadow-blue-600/10 tracking-wide text-white">
-    🖥 MONITOR MONITOR QC
-  </button>
-</div>
-
-
-<div id="packer-screen" class="hidden h-full flex flex-col bg-[#090d16] safe-p gap-3 overflow-hidden">
-  
-  <div class="bg-slate-900/80 backdrop-blur-md rounded-2xl p-3 flex flex-col gap-2 shrink-0 border border-slate-800/60 shadow-xl">
-    <div class="flex gap-2 w-full">
-      <input id="customer-name" type="text" placeholder="Nama meja / customer..." 
-        class="flex-1 bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm outline-none text-white focus:border-orange-500 transition font-medium placeholder:text-slate-600"/>
-      <button onclick="resetOrder()" class="tap-btn px-4 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-bold tracking-wider shrink-0">
-        RESET
-      </button>
-    </div>
-    
-    <div class="flex justify-between items-center pt-1 border-t border-slate-800/50">
-      <div class="flex items-center gap-2">
-        <span class="text-slate-500 text-xs font-bold tracking-wider">TOTAL ITEM:</span>
-        <span id="total-item" class="text-2xl font-black text-orange-400">0</span>
+    <!-- Logo -->
+    <div style="text-align:center;margin-bottom:8px;">
+      <div style="font-size:42px;font-weight:900;letter-spacing:-.03em;
+                  background:linear-gradient(135deg,#f97316,#f59e0b);
+                  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+                  background-clip:text;line-height:1.1;">
+        GACOAN
       </div>
-      <button id="submit-btn" onclick="submitOrder()" class="tap-btn bg-emerald-500 hover:bg-emerald-600 text-white px-6 py-2 rounded-xl text-sm font-black tracking-wide shadow-md shadow-emerald-500/10">
-        DONE
-      </button>
+      <div style="font-size:11px;font-weight:800;letter-spacing:.2em;color:var(--muted);margin-top:4px;">
+        PACKING ACCURACY SYSTEM
+      </div>
+    </div>
+
+    <!-- Buttons -->
+    <button onclick="openPacker()" class="tap"
+      style="width:100%;padding:18px;border-radius:18px;border:none;
+             background:linear-gradient(135deg,#f97316,#ea580c);
+             color:#fff;font-size:17px;font-weight:900;letter-spacing:.03em;
+             box-shadow:0 12px 32px rgba(249,115,22,.25);">
+      📦&nbsp; INTERFAS PACKER
+    </button>
+
+    <button onclick="openPresenter()" class="tap"
+      style="width:100%;padding:18px;border-radius:18px;border:none;
+             background:linear-gradient(135deg,#3b82f6,#1d4ed8);
+             color:#fff;font-size:17px;font-weight:900;letter-spacing:.03em;
+             box-shadow:0 12px 32px rgba(59,130,246,.2);">
+      🖥&nbsp; MONITOR QC
+    </button>
+
+    <div style="font-size:11px;color:var(--muted);text-align:center;margin-top:4px;">
+      Pilih peran sesuai posisi tim
     </div>
   </div>
-
-  <div id="menu-grid" class="flex-1 overflow-y-auto no-scrollbar scroll-smooth-touch grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2.5 pb-4">
-    </div>
-
 </div>
 
 
-<div id="presenter-screen" class="hidden h-full bg-[#090d16] safe-p overflow-hidden">
-  <div class="h-full flex flex-col gap-3">
+<!-- ===================== PACKER SCREEN ===================== -->
+<div id="packer-screen" class="screen">
 
-    <div class="flex justify-between items-center shrink-0 bg-slate-900/40 p-2 rounded-xl border border-slate-800/30">
-      <h1 class="text-xl font-black tracking-tight flex items-center gap-2">
-        <span>📋</span> MONITOR QC
-      </h1>
-      <div id="order-count" class="bg-blue-500/10 text-blue-400 px-3 py-1 rounded-lg text-xs font-black tracking-wider">
+  <!-- Sticky header -->
+  <div class="sticky-header pt-safe px-safe">
+    <div style="padding:12px 0;display:flex;flex-direction:column;gap:10px;
+                border-bottom:1px solid var(--border);margin-bottom:4px;">
+
+      <!-- Row: nama customer + reset -->
+      <div style="display:flex;gap:10px;align-items:center;">
+        <input id="customer-name" type="text" placeholder="Nama meja / customer…"
+               inputmode="text" autocomplete="off" style="flex:1;"/>
+        <button onclick="resetOrder()" class="tap"
+          style="padding:11px 14px;border-radius:14px;border:none;
+                 background:#1f2937;color:#94a3b8;
+                 font-size:12px;font-weight:800;letter-spacing:.06em;white-space:nowrap;flex-shrink:0;">
+          RESET
+        </button>
+      </div>
+
+      <!-- Row: total + submit -->
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span style="font-size:11px;font-weight:800;color:var(--muted);letter-spacing:.08em;">TOTAL ITEM</span>
+          <span id="total-item"
+            style="font-size:30px;font-weight:900;color:var(--orange);line-height:1;">0</span>
+        </div>
+
+        <button id="submit-btn" onclick="submitOrder()" class="tap"
+          style="padding:12px 26px;border-radius:14px;border:none;
+                 background:linear-gradient(135deg,#10b981,#059669);
+                 color:#fff;font-size:14px;font-weight:900;letter-spacing:.06em;
+                 box-shadow:0 6px 20px rgba(16,185,129,.2);">
+          ✓&nbsp;DONE
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scrollable menu grid -->
+  <div class="scroll-area px-safe pb-safe" style="padding-top:12px;">
+    <div id="menu-grid" class="menu-grid" style="padding-bottom:32px;">
+      <!-- Diisi JS -->
+    </div>
+  </div>
+</div>
+
+
+<!-- ===================== PRESENTER SCREEN ===================== -->
+<div id="presenter-screen" class="screen">
+
+  <!-- Sticky header -->
+  <div class="sticky-header pt-safe px-safe">
+    <div style="padding:12px 0 10px;display:flex;justify-content:space-between;
+                align-items:center;border-bottom:1px solid var(--border);margin-bottom:2px;">
+      <div style="display:flex;align-items:center;gap:8px;">
+        <span style="font-size:20px;">📋</span>
+        <span style="font-size:18px;font-weight:900;letter-spacing:-.01em;">MONITOR QC</span>
+      </div>
+      <div id="order-count" class="badge"
+        style="background:rgba(59,130,246,.12);color:#60a5fa;">
         0 ORDER
       </div>
     </div>
+  </div>
 
-    <div id="presenter-list" class="flex-1 overflow-y-auto no-scrollbar scroll-smooth-touch space-y-2.5 pb-4">
-      <div class="text-center text-slate-600 pt-40 text-sm font-medium tracking-wide">
+  <!-- Scrollable order list -->
+  <div class="scroll-area px-safe pb-safe" style="padding-top:12px;">
+    <div id="presenter-list" style="display:flex;flex-direction:column;gap:12px;padding-bottom:32px;">
+      <div id="empty-msg"
+        style="text-align:center;color:var(--muted);padding:80px 0;font-size:14px;font-weight:600;">
         Belum ada antrian pesanan.
       </div>
     </div>
-
   </div>
 </div>
 
 
+<!-- Toast notification -->
+<div id="toast"></div>
+
+
+<!-- ===================== JAVASCRIPT ===================== -->
 <script>
-/* =========================
-FIREBASE CONFIGURATION
-========================= */
+/* ---- Firebase ---- */
 const firebaseConfig = {
   apiKey: "AIzaSyCbfeWmArHKHXWxhr5p9c756vl5KrJ9pUE",
   authDomain: "akurasi-sistem.firebaseapp.com",
@@ -132,91 +338,98 @@ const firebaseConfig = {
   projectId: "akurasi-sistem",
   storageBucket: "akurasi-sistem.firebasestorage.app",
   messagingSenderId: "526061479850",
-  appId: "1:526061479850:web:90462c55e0f86ab3366dd3",
-  measurementId: "G-2NYP4V3E85"
+  appId: "1:526061479850:web:90462c55e0f86ab3366dd3"
 };
-
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 const ordersRef = db.ref("gacoan_orders");
 
-/* =========================
-DATA MASTER MENU
-========================= */
+/* ---- Menu master ---- */
 const menuList = [
-  { id: "udang-keju", nama: "Udang Keju", color: "bg-orange-500" },
-  { id: "udang-rambutan", nama: "Udang Rambutan", color: "bg-red-500" },
-  { id: "siomay", nama: "Siomay", color: "bg-amber-500" },
-  { id: "lumpia-udang", nama: "Lumpia Udang", color: "bg-blue-500" }
+  { id: "udang-keju",    nama: "Udang Keju",    dot:"#f97316" },
+  { id: "udang-rambutan",nama: "Udang Rambutan", dot:"#ef4444" },
+  { id: "siomay",        nama: "Siomay",         dot:"#f59e0b" },
+  { id: "lumpia-udang",  nama: "Lumpia Udang",   dot:"#3b82f6" }
 ];
 
-/* =========================
-APPLICATION STATE
-========================= */
+/* ---- State ---- */
 let items = {};
 let submitting = false;
 
-/* =========================
-NAVIGATION CONTROLLER
-========================= */
+/* ---- Toast helper ---- */
+let toastTimer;
+function showToast(msg, emoji = ""){
+  const el = document.getElementById("toast");
+  el.innerHTML = emoji ? `${emoji} ${msg}` : msg;
+  el.classList.add("show");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove("show"), 2200);
+}
+
+/* ---- Audio feedback (opsional, tidak blocking) ---- */
+function tapSound(){
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain); gain.connect(ctx.destination);
+    osc.type = "sine";
+    osc.frequency.setValueAtTime(880, ctx.currentTime);
+    gain.gain.setValueAtTime(.06, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(.001, ctx.currentTime + .12);
+    osc.start(ctx.currentTime);
+    osc.stop(ctx.currentTime + .12);
+  } catch(e){}
+}
+
+/* ---- Navigation ---- */
+function showScreen(id){
+  document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
+  document.getElementById(id).classList.add("active");
+  // Scroll to top setiap pindah screen
+  const scrollArea = document.querySelector(`#${id} .scroll-area`);
+  if(scrollArea) scrollArea.scrollTop = 0;
+}
+
 function openPacker(){
-  document.getElementById("role-screen").classList.add("hidden");
-  document.getElementById("packer-screen").classList.remove("hidden");
+  showScreen("packer-screen");
   renderMenu();
 }
 
 function openPresenter(){
-  document.getElementById("role-screen").classList.add("hidden");
-  document.getElementById("presenter-screen").classList.remove("hidden");
+  showScreen("presenter-screen");
   listenOrders();
 }
 
-/* =========================
-AUDIO FEEDBACK
-========================= */
-function tapSound(){
-  const audio = new Audio("https://cdn.pixabay.com/download/audio/2022/03/15/audio_c8c8a73467.mp3?filename=click-124467.mp3");
-  audio.volume = 0.12;
-  audio.play().catch(err => console.log("Audio play blocked/error"));
-}
-
-/* =========================
-RENDER PACKER ITEMS
-========================= */
+/* ---- Render menu cards ---- */
 function renderMenu(){
   const container = document.getElementById("menu-grid");
   let html = "";
 
   menuList.forEach(menu => {
-    const qty = items[menu.id]?.qty || 0;
-    const hasQty = qty > 0;
-
+    const qty  = items[menu.id]?.qty || 0;
+    const active = qty > 0;
     html += `
-      <div class="bg-slate-900 rounded-2xl p-3.5 flex flex-col justify-between border ${hasQty ? 'border-orange-500/40 shadow-lg' : 'border-slate-800/70'} transition duration-150 min-h-[145px]">
-        <div>
-          <div class="flex items-center gap-1.5 mb-1.5">
-            <span class="w-1.5 h-1.5 rounded-full ${menu.color}"></span>
-            <span class="text-[10px] uppercase font-black text-slate-500 tracking-wider">DIMSUM</span>
-          </div>
-          <h3 class="font-black text-lg leading-snug text-slate-100 tracking-tight">
-            ${menu.nama}
-          </h3>
+      <div class="menu-card ${active ? "active" : ""}">
+        <!-- Label -->
+        <div style="display:flex;align-items:center;gap:6px;">
+          <span style="width:8px;height:8px;border-radius:50%;background:${menu.dot};flex-shrink:0;"></span>
+          <span style="font-size:9px;font-weight:800;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;">DIMSUM</span>
         </div>
-
-        <div class="flex items-center justify-between gap-2 mt-2">
-          <button onclick="minusQty('${menu.id}')" 
-            class="tap-btn w-10 h-10 rounded-xl bg-slate-800 text-xl font-bold flex items-center justify-center text-rose-400 active:bg-rose-500/10">
-            −
-          </button>
-          
-          <div class="text-2xl font-black ${hasQty ? 'text-orange-400 scale-105' : 'text-slate-600'} transition-all min-w-[32px] text-center">
+        <!-- Nama -->
+        <div style="font-size:16px;font-weight:900;letter-spacing:-.01em;line-height:1.25;flex:1;">
+          ${menu.nama}
+        </div>
+        <!-- Counter -->
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
+          <button class="qty-btn tap" onclick="minusQty('${menu.id}')"
+            style="color:#f87171;">−</button>
+          <span style="font-size:28px;font-weight:900;min-width:36px;text-align:center;
+                       color:${active ? "var(--orange)" : "var(--muted)"};">
             ${qty}
-          </div>
-          
-          <button onclick="plusQty('${menu.id}','${menu.nama}')" 
-            class="tap-btn w-10 h-10 rounded-xl bg-slate-800 text-xl font-bold flex items-center justify-center text-emerald-400 active:bg-emerald-500/10">
-            +
-          </button>
+          </span>
+          <button class="qty-btn tap" onclick="plusQty('${menu.id}','${menu.nama}')"
+            style="color:#34d399;">+</button>
         </div>
       </div>
     `;
@@ -228,23 +441,21 @@ function renderMenu(){
 
 function plusQty(id, nama){
   tapSound();
-  if(items[id]) { items[id].qty += 1; } 
-  else { items[id] = { id, nama, qty: 1 }; }
+  items[id] ? items[id].qty++ : (items[id] = { id, nama, qty: 1 });
   renderMenu();
 }
 
 function minusQty(id){
   tapSound();
   if(!items[id]) return;
-  items[id].qty -= 1;
-  if(items[id].qty <= 0) { delete items[id]; }
+  items[id].qty--;
+  if(items[id].qty <= 0) delete items[id];
   renderMenu();
 }
 
 function updateTotal(){
-  let total = 0;
-  Object.values(items).forEach(item => { total += item.qty; });
-  document.getElementById("total-item").innerText = total;
+  const total = Object.values(items).reduce((s, i) => s + i.qty, 0);
+  document.getElementById("total-item").textContent = total;
 }
 
 function resetOrder(){
@@ -254,101 +465,95 @@ function resetOrder(){
   renderMenu();
 }
 
-/* =========================
-SUBMIT TO DATABASE
-========================= */
+/* ---- Submit ---- */
 async function submitOrder(){
   if(submitting) return;
   const customer = document.getElementById("customer-name").value.trim();
-
-  if(!customer){ alert("Masukkan nama customer / nomor meja!"); return; }
-  if(Object.keys(items).length === 0){ alert("Belum ada item yang diinput!"); return; }
+  if(!customer){ showToast("Masukkan nama meja / customer!", "⚠️"); return; }
+  if(Object.keys(items).length === 0){ showToast("Belum ada item yang dipilih!", "⚠️"); return; }
 
   tapSound();
   submitting = true;
-  
+
   const btn = document.getElementById("submit-btn");
   btn.disabled = true;
-  btn.innerText = "SAVING...";
-
-  const orderId = Date.now();
+  btn.innerHTML = `<span class="spinner"></span>SAVING…`;
 
   try {
-    await ordersRef.child(orderId).set({
+    await ordersRef.child(Date.now()).set({
       customer,
       timestamp: Date.now(),
       status: "waiting",
       items
     });
+    showToast(`Order "${customer}" terkirim!`, "✅");
     resetOrder();
-  } catch(err) {
+  } catch(err){
     console.error(err);
-    alert("Koneksi gagal, coba lagi!");
+    showToast("Koneksi gagal, coba lagi!", "❌");
   }
 
   btn.disabled = false;
-  btn.innerText = "DONE";
+  btn.innerHTML = "✓&nbsp;DONE";
   submitting = false;
 }
 
-/* =========================
-LIVE DATABASE MONITOR (PRESENTER)
-========================= */
+/* ---- Live monitor ---- */
 function listenOrders(){
-  ordersRef.on("value", (snapshot) => {
-    const container = document.getElementById("presenter-list");
+  ordersRef.on("value", snapshot => {
+    const list = document.getElementById("presenter-list");
+    const countEl = document.getElementById("order-count");
 
     if(!snapshot.exists()){
-      container.innerHTML = `
-        <div class="text-center text-slate-600 pt-40 text-sm font-medium tracking-wide">
+      list.innerHTML = `
+        <div id="empty-msg"
+          style="text-align:center;color:var(--muted);padding:80px 0;font-size:14px;font-weight:600;">
           Belum ada antrian pesanan.
-        </div>
-      `;
-      document.getElementById("order-count").innerText = "0 ORDER";
+        </div>`;
+      countEl.textContent = "0 ORDER";
       return;
     }
 
     const data = snapshot.val();
     const keys = Object.keys(data).reverse();
-    document.getElementById("order-count").innerText = `${keys.length} ORDER`;
+    countEl.textContent = `${keys.length} ORDER`;
 
     let html = "";
-
     keys.forEach(orderId => {
       const order = data[orderId];
       let itemHtml = "";
-
       Object.values(order.items).forEach(item => {
         itemHtml += `
-          <div class="bg-slate-950/60 rounded-xl p-2.5 flex justify-between items-center border border-slate-900">
-            <span class="font-bold text-base text-slate-200 tracking-tight">${item.nama}</span>
-            <span class="text-xl font-black text-orange-400">x${item.qty}</span>
-          </div>
-        `;
+          <div class="item-row">
+            <span style="font-weight:700;font-size:15px;">${item.nama}</span>
+            <span style="font-size:20px;font-weight:900;color:var(--orange);">×${item.qty}</span>
+          </div>`;
       });
 
+      const jam = new Date(order.timestamp).toLocaleTimeString("id-ID", { hour:"2-digit", minute:"2-digit" });
+
       html += `
-        <div class="bg-slate-900 rounded-2xl p-4 border border-slate-800/80 shadow-md">
-          <div class="flex justify-between items-start mb-3">
+        <div class="order-card">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;">
             <div>
-              <h2 class="font-black text-lg text-white tracking-tight">👤 ${order.customer}</h2>
-              <p class="text-[11px] text-slate-500 font-medium mt-0.5">
-                Jam: ${new Date(order.timestamp).toLocaleTimeString('id-ID', {hour: '2-digit', minute:'2-digit'})}
-              </p>
+              <div style="font-size:17px;font-weight:900;letter-spacing:-.01em;">👤 ${order.customer}</div>
+              <div style="font-size:11px;color:var(--muted);font-weight:600;margin-top:3px;">Jam ${jam}</div>
             </div>
-            <button onclick="finishOrder('${orderId}')"
-              class="tap-btn bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded-xl text-xs font-black tracking-wider">
+            <button onclick="finishOrder('${orderId}')" class="tap"
+              style="padding:9px 18px;border-radius:12px;border:none;
+                     background:linear-gradient(135deg,#10b981,#059669);
+                     color:#fff;font-size:12px;font-weight:900;letter-spacing:.06em;
+                     flex-shrink:0;">
               CLEAR
             </button>
           </div>
-          <div class="grid grid-cols-1 gap-1.5">
+          <div style="display:flex;flex-direction:column;gap:8px;">
             ${itemHtml}
           </div>
-        </div>
-      `;
+        </div>`;
     });
 
-    container.innerHTML = html;
+    list.innerHTML = html;
   });
 }
 
@@ -357,6 +562,5 @@ function finishOrder(orderId){
   ordersRef.child(orderId).remove();
 }
 </script>
-
 </body>
 </html>
