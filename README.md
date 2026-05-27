@@ -205,14 +205,15 @@ FIREBASE
 
 const firebaseConfig = {
 
-apiKey: "ISI_APIKEY_FIREBASE",
-authDomain: "ISI_DOMAIN_FIREBASE",
-databaseURL: "ISI_DATABASE_URL",
-projectId: "ISI_PROJECT_ID",
-storageBucket: "ISI_STORAGE_BUCKET",
-messagingSenderId: "ISI_SENDER_ID",
-appId: "ISI_APP_ID"
-
+const firebaseConfig = {
+  apiKey: "AIzaSyCbfeWmArHKHXWxhr5p9c756vl5KrJ9pUE",
+  authDomain: "akurasi-sistem.firebaseapp.com",
+  databaseURL: "https://akurasi-sistem-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "akurasi-sistem",
+  storageBucket: "akurasi-sistem.firebasestorage.app",
+  messagingSenderId: "526061479850",
+  appId: "1:526061479850:web:90462c55e0f86ab3366dd3",
+  measurementId: "G-2NYP4V3E85"
 };
 
 firebase.initializeApp(firebaseConfig);
