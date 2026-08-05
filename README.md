@@ -1,566 +1,733 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-<meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
-<title>Gacoan ACC System</title>
-<script src="https://cdn.tailwindcss.com"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gacoan Calibration System</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700;800;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
-<style>
-  /* ---- Reset & base ---- */
-  *, *::before, *::after { box-sizing: border-box; }
+    <style>
+        :root {
+            --pink: #EC1A6B;
+            --pink-dark: #C4105A;
+            --blue: #4FC3E8;
+            --green: #1FAF6E;
+            --orange: #F59E0B;
+            --red: #DC2626;
+            --bg: #F8FAFC;
+            --white: #FFFFFF;
+            --text: #1A1A2E;
+            --soft: #64748B;
+            --border: #EADCE5;
+        }
 
-  :root {
-    --orange: #f97316;
-    --amber:  #f59e0b;
-    --emerald:#10b981;
-    --blue:   #3b82f6;
-    --bg:     #090d16;
-    --surface:#111827;
-    --border: #1f2937;
-    --text:   #f1f5f9;
-    --muted:  #64748b;
-    --safe-top:    env(safe-area-inset-top,    0px);
-    --safe-bottom: env(safe-area-inset-bottom, 0px);
-    --safe-left:   env(safe-area-inset-left,   0px);
-    --safe-right:  env(safe-area-inset-right,  0px);
-  }
+        * {
+            box-sizing: border-box;
+        }
 
-  html {
-    /* Penting: pakai height 100% bukan 100dvh di root, biar iOS tidak kacau */
-    height: 100%;
-    background: var(--bg);
-  }
+        body {
+            margin: 0;
+            padding-bottom: 40px;
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(180deg, #EAFBFF, #FFFFFF 25%);
+            color: var(--text);
+        }
 
-  body {
-    margin: 0;
-    min-height: 100%;
-    /* TIDAK menggunakan position:fixed — ini yang bikin scroll mati */
-    background: var(--bg);
-    color: var(--text);
-    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif;
-    -webkit-tap-highlight-color: transparent;
-    -webkit-text-size-adjust: 100%;
-    overscroll-behavior: none;
-  }
+        .app {
+            max-width: 520px;
+            margin: auto;
+            padding: 15px;
+        }
 
-  /* ---- Screen management ---- */
-  .screen {
-    display: none;
-    min-height: 100dvh;              /* dynamic viewport height — iOS 15.4+ */
-    min-height: -webkit-fill-available; /* fallback older Safari */
-  }
-  .screen.active { display: flex; flex-direction: column; }
+        /* HEADER */
+        .header {
+            background: white;
+            border-radius: 22px;
+            padding: 20px;
+            box-shadow: 0 8px 25px rgba(0,0,0,.05);
+        }
 
-  /* ---- Safe-area padding utility ---- */
-  .pt-safe { padding-top: max(16px, env(safe-area-inset-top)); }
-  .pb-safe { padding-bottom: max(16px, env(safe-area-inset-bottom)); }
-  .px-safe {
-    padding-left:  max(16px, env(safe-area-inset-left));
-    padding-right: max(16px, env(safe-area-inset-right));
-  }
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
 
-  /* ---- Scrollable container — kunci utama fix scroll ---- */
-  .scroll-area {
-    flex: 1 1 0;          /* ambil sisa ruang */
-    overflow-y: auto;
-    -webkit-overflow-scrolling: touch; /* momentum scroll iOS */
-    overscroll-behavior-y: contain;
-  }
+        .logo {
+            width: 45px;
+            height: 45px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            font-weight: 900;
+            color: white;
+            background: linear-gradient(135deg, var(--pink), var(--blue));
+        }
 
-  /* ---- Tap feedback ---- */
-  .tap {
-    -webkit-user-select: none; user-select: none;
-    cursor: pointer;
-    transition: transform .1s ease, opacity .1s ease;
-  }
-  .tap:active { transform: scale(.94); opacity: .82; }
+        h1 {
+            font-family: Poppins;
+            font-size: 20px;
+            margin: 0;
+            font-weight: 900;
+        }
 
-  /* ---- No scrollbar ---- */
-  .scroll-area::-webkit-scrollbar { display: none; }
-  .scroll-area { scrollbar-width: none; }
+        .subtitle {
+            font-size: 12px;
+            color: var(--soft);
+        }
 
-  /* ---- Menu card ---- */
-  .menu-card {
-    background: var(--surface);
-    border: 1.5px solid var(--border);
-    border-radius: 18px;
-    padding: 14px;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    transition: border-color .15s, box-shadow .15s;
-    min-height: 140px;
-  }
-  .menu-card.active {
-    border-color: rgba(249,115,22,.5);
-    box-shadow: 0 0 0 1px rgba(249,115,22,.15), 0 8px 20px rgba(249,115,22,.08);
-  }
+        /* CARD */
+        .card {
+            background: white;
+            margin-top: 15px;
+            padding: 18px;
+            border-radius: 22px;
+            border: 1px solid var(--border);
+            box-shadow: 0 8px 25px rgba(236,26,107,.07);
+        }
 
-  /* ---- Badge pill ---- */
-  .badge {
-    display: inline-flex; align-items: center;
-    padding: 2px 10px;
-    border-radius: 999px;
-    font-size: 10px; font-weight: 800;
-    letter-spacing: .07em; text-transform: uppercase;
-  }
+        .title {
+            font-family: Poppins;
+            font-size: 15px;
+            font-weight: 800;
+            margin-bottom: 15px;
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
 
-  /* ---- Qty counter ---- */
-  .qty-btn {
-    width: 40px; height: 40px;
-    border-radius: 12px;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 20px; font-weight: 800;
-    background: var(--border);
-    border: none; outline: none;
-  }
+        .dot {
+            width: 9px;
+            height: 9px;
+            background: var(--pink);
+            border-radius: 50%;
+        }
 
-  /* ---- Order card (monitor) ---- */
-  .order-card {
-    background: var(--surface);
-    border: 1.5px solid var(--border);
-    border-radius: 20px;
-    padding: 16px;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-  }
+        /* INPUT */
+        label {
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--soft);
+            text-transform: uppercase;
+            display: block;
+            margin-bottom: 6px;
+        }
 
-  /* ---- Item row inside order card ---- */
-  .item-row {
-    background: rgba(9,13,22,.5);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 10px 14px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
+        input, select {
+            width: 100%;
+            padding: 13px;
+            border-radius: 14px;
+            border: 1.5px solid var(--border);
+            font-size: 15px;
+            font-weight: 600;
+            outline: none;
+            transition: all 0.2s;
+        }
 
-  /* ---- Spinner ---- */
-  .spinner {
-    width: 18px; height: 18px;
-    border: 2px solid rgba(255,255,255,.2);
-    border-top-color: #fff;
-    border-radius: 50%;
-    animation: spin .7s linear infinite;
-    display: inline-block; vertical-align: middle; margin-right: 6px;
-  }
-  @keyframes spin { to { transform: rotate(360deg); } }
+        input:focus, select:focus {
+            border-color: var(--pink);
+        }
 
-  /* ---- Toast ---- */
-  #toast {
-    position: fixed;
-    bottom: calc(20px + env(safe-area-inset-bottom));
-    left: 50%; transform: translateX(-50%) translateY(80px);
-    background: #1a2332;
-    border: 1px solid var(--border);
-    color: var(--text);
-    padding: 12px 22px;
-    border-radius: 999px;
-    font-size: 13px; font-weight: 700;
-    box-shadow: 0 8px 32px rgba(0,0,0,.5);
-    z-index: 9999;
-    transition: transform .3s cubic-bezier(.22,1,.36,1), opacity .3s;
-    opacity: 0; pointer-events: none;
-    white-space: nowrap;
-  }
-  #toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+        /* ITEM BUTTON */
+        .items {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
 
-  /* ---- Responsive grid ---- */
-  .menu-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 12px;
-  }
-  @media (min-width: 480px)  { .menu-grid { grid-template-columns: repeat(3, 1fr); } }
-  @media (min-width: 720px)  { .menu-grid { grid-template-columns: repeat(4, 1fr); } }
+        .item {
+            padding: 9px 14px;
+            border-radius: 100px;
+            background: white;
+            border: 1.5px solid var(--border);
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
 
-  /* ---- Header sticky (packer & presenter) ---- */
-  .sticky-header {
-    position: sticky; top: 0; z-index: 10;
-    background: var(--bg);
-  }
+        .item.active {
+            background: var(--pink);
+            color: white;
+            border-color: var(--pink);
+        }
 
-  /* ---- Input ---- */
-  input[type=text] {
-    background: #0d1421;
-    border: 1.5px solid var(--border);
-    border-radius: 14px;
-    padding: 11px 16px;
-    color: var(--text);
-    font-size: 15px; font-weight: 600;
-    outline: none;
-    width: 100%;
-    transition: border-color .15s;
-    -webkit-appearance: none;
-    appearance: none;
-  }
-  input[type=text]::placeholder { color: var(--muted); font-weight: 500; }
-  input[type=text]:focus { border-color: var(--orange); }
-</style>
+        /* Styling spesifik untuk "+ Lainnya" */
+        .item-other.active {
+            background: var(--blue);
+            border-color: var(--blue);
+        }
+
+        /* INPUT UNTUK ITEM LAINNYA (SESUAI GAMBAR) */
+        #otherItemInput {
+            margin-top: 10px;
+            border-color: var(--pink);
+            display: none; /* Tersembunyi secara default */
+        }
+
+        #otherItemInput:focus {
+            box-shadow: 0 0 0 3px rgba(236, 26, 107, 0.15);
+        }
+
+        /* GRAM INPUT */
+        .gram-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 8px;
+        }
+
+        .gram {
+            position: relative;
+        }
+
+        .gram span {
+            position: absolute;
+            top: 4px;
+            left: 7px;
+            font-size: 9px;
+            color: #CBD5E1;
+        }
+
+        .gram input {
+            padding-top: 18px;
+            text-align: center;
+            font-family: Poppins;
+            font-weight: 800;
+            background: #FFF5FA;
+        }
+
+        /* STATUS */
+        .status {
+            margin-top: 12px;
+            padding: 12px;
+            border-radius: 15px;
+            text-align: center;
+            font-weight: 800;
+            font-size: 14px;
+        }
+
+        .status.good {
+            background: #DCFCE7;
+            color: #15803D;
+        }
+
+        .status.warning {
+            background: #FEF3C7;
+            color: #B45309;
+        }
+
+        .status.bad {
+            background: #FEE2E2;
+            color: #B91C1C;
+        }
+
+        /* RESULT */
+        .stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .stat {
+            padding: 15px;
+            border-radius: 18px;
+            background: #FFF0F7;
+            text-align: center;
+        }
+
+        .stat.blue {
+            background: #EAFBFF;
+        }
+
+        .stat-title {
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--soft);
+        }
+
+        .stat-value {
+            font-family: Poppins;
+            font-size: 25px;
+            font-weight: 900;
+            margin-top: 5px;
+        }
+
+        /* BUTTON */
+        button {
+            width: 100%;
+            margin-top: 15px;
+            padding: 15px;
+            border: none;
+            border-radius: 16px;
+            font-family: Poppins;
+            font-size: 15px;
+            font-weight: 800;
+            cursor: pointer;
+        }
+
+        .btn-primary {
+            background: linear-gradient(120deg, var(--pink), var(--pink-dark));
+            color: white;
+        }
+
+        /* DASHBOARD */
+        .dashboard-box {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+        }
+
+        .dashboard-card {
+            padding: 15px;
+            border-radius: 18px;
+            background: white;
+            border: 1px solid var(--border);
+            text-align: center;
+        }
+
+        .dashboard-number {
+            font-family: Poppins;
+            font-size: 25px;
+            font-weight: 900;
+        }
+
+        .rank-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .rank-item:last-child {
+            border-bottom: none;
+        }
+    </style>
 </head>
 <body>
 
-<!-- ===================== ROLE SCREEN ===================== -->
-<div id="role-screen" class="screen active" style="justify-content:center;align-items:center;padding:24px;">
-  <div style="width:100%;max-width:340px;display:flex;flex-direction:column;align-items:center;gap:20px;">
+<div class="app">
 
-    <!-- Logo -->
-    <div style="text-align:center;margin-bottom:8px;">
-      <div style="font-size:42px;font-weight:900;letter-spacing:-.03em;
-                  background:linear-gradient(135deg,#f97316,#f59e0b);
-                  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
-                  background-clip:text;line-height:1.1;">
-        GACOAN
-      </div>
-      <div style="font-size:11px;font-weight:800;letter-spacing:.2em;color:var(--muted);margin-top:4px;">
-        PACKING ACCURACY SYSTEM
-      </div>
+    <!-- HEADER -->
+    <div class="header">
+        <div class="brand">
+            <div class="logo">G</div>
+            <div>
+                <h1>Calibration System</h1>
+                <div class="subtitle">Gacoan Quality Control</div>
+            </div>
+        </div>
     </div>
 
-    <!-- Buttons -->
-    <button onclick="openPacker()" class="tap"
-      style="width:100%;padding:18px;border-radius:18px;border:none;
-             background:linear-gradient(135deg,#f97316,#ea580c);
-             color:#fff;font-size:17px;font-weight:900;letter-spacing:.03em;
-             box-shadow:0 12px 32px rgba(249,115,22,.25);">
-      📦&nbsp; INTERFAS PACKER
-    </button>
-
-    <button onclick="openPresenter()" class="tap"
-      style="width:100%;padding:18px;border-radius:18px;border:none;
-             background:linear-gradient(135deg,#3b82f6,#1d4ed8);
-             color:#fff;font-size:17px;font-weight:900;letter-spacing:.03em;
-             box-shadow:0 12px 32px rgba(59,130,246,.2);">
-      🖥&nbsp; MONITOR QC
-    </button>
-
-    <div style="font-size:11px;color:var(--muted);text-align:center;margin-top:4px;">
-      Pilih peran sesuai posisi tim
+    <!-- OUTLET -->
+    <div class="card">
+        <div class="title">
+            <span class="dot"></span> Outlet
+        </div>
+        <select id="outlet">
+            <option value="MLGMON">MLGMON - MALANG MONDOROKO</option>
+            <option value="MLGJAK">MLGJAK - MALANG JAKARTA</option>
+            <option value="MLGSOE">MLGSOE - MALANG SOEKARNO HATTA</option>
+            <option value="MLGRON">MLGRON - MALANG RONGGOWARSITO</option>
+            <option value="MLGDIR">MLGDIR - MALANG DIRGANTARA</option>
+        </select>
     </div>
-  </div>
-</div>
 
-
-<!-- ===================== PACKER SCREEN ===================== -->
-<div id="packer-screen" class="screen">
-
-  <!-- Sticky header -->
-  <div class="sticky-header pt-safe px-safe">
-    <div style="padding:12px 0;display:flex;flex-direction:column;gap:10px;
-                border-bottom:1px solid var(--border);margin-bottom:4px;">
-
-      <!-- Row: nama customer + reset -->
-      <div style="display:flex;gap:10px;align-items:center;">
-        <input id="customer-name" type="text" placeholder="Nama meja / customer…"
-               inputmode="text" autocomplete="off" style="flex:1;"/>
-        <button onclick="resetOrder()" class="tap"
-          style="padding:11px 14px;border-radius:14px;border:none;
-                 background:#1f2937;color:#94a3b8;
-                 font-size:12px;font-weight:800;letter-spacing:.06em;white-space:nowrap;flex-shrink:0;">
-          RESET
-        </button>
-      </div>
-
-      <!-- Row: total + submit -->
-      <div style="display:flex;justify-content:space-between;align-items:center;">
-        <div style="display:flex;align-items:center;gap:8px;">
-          <span style="font-size:11px;font-weight:800;color:var(--muted);letter-spacing:.08em;">TOTAL ITEM</span>
-          <span id="total-item"
-            style="font-size:30px;font-weight:900;color:var(--orange);line-height:1;">0</span>
+    <!-- INPUT -->
+    <div class="card">
+        <div class="title">
+            <span class="dot"></span> Input Kalibrasi
         </div>
 
-        <button id="submit-btn" onclick="submitOrder()" class="tap"
-          style="padding:12px 26px;border-radius:14px;border:none;
-                 background:linear-gradient(135deg,#10b981,#059669);
-                 color:#fff;font-size:14px;font-weight:900;letter-spacing:.06em;
-                 box-shadow:0 6px 20px rgba(16,185,129,.2);">
-          ✓&nbsp;DONE
-        </button>
-      </div>
-    </div>
-  </div>
+        <label for="crew">Nama Crew</label>
+        <input id="crew" placeholder="mis. Edo, Ibnu, Via...">
+        <br><br>
 
-  <!-- Scrollable menu grid -->
-  <div class="scroll-area px-safe pb-safe" style="padding-top:12px;">
-    <div id="menu-grid" class="menu-grid" style="padding-bottom:32px;">
-      <!-- Diisi JS -->
+        <label>Item Kalibrasi</label>
+        <div class="items">
+            <div class="item active" data-item="Acin">Acin (8g)</div>
+            <div class="item" data-item="Bagor">Bagor (4g)</div>
+            <div class="item" data-item="Basic">Basic (12g)</div>
+            <div class="item" data-item="Minyak Mie">Minyak Mie (14g)</div>
+            <div class="item" data-item="Adonan">Adonan (15g)</div>
+            <!-- Tombol Lainnya disesuaikan seperti gambar -->
+            <div class="item item-other" data-item="Lainnya">+ Lainnya</div>
+        </div>
+        
+        <!-- INPUT FIELD TAMBAHAN UNTUK "LAINNYA" (SESUAI GAMBAR) -->
+        <input type="text" id="otherItemInput" placeholder="Atau ketik item lain...">
+
     </div>
-  </div>
+
+    <!-- GRAMASI -->
+    <div class="card">
+        <div class="title">
+            <span class="dot"></span> 10 Trial Gramasi
+        </div>
+
+        <div class="gram-grid" id="gramGrid"></div>
+        <div id="status" class="status">Menunggu input</div>
+
+        <div class="stats">
+            <div class="stat">
+                <div class="stat-title">Average</div>
+                <div class="stat-value" id="avg">-</div>
+            </div>
+            <div class="stat blue">
+                <div class="stat-title">Benchmark</div>
+                <div class="stat-value" id="benchmark">-</div>
+            </div>
+        </div>
+
+        <button class="btn-primary" id="save">Simpan Kalibrasi</button>
+    </div>
+
+    <!-- DASHBOARD -->
+    <div class="card">
+        <div class="title">
+            <span class="dot"></span> Dashboard Hari Ini
+        </div>
+
+        <div class="dashboard-box">
+            <div class="dashboard-card">
+                <div>Total Trial</div>
+                <div class="dashboard-number" id="totalTrial">0</div>
+            </div>
+            <div class="dashboard-card">
+                <div>Accuracy %</div>
+                <div class="dashboard-number" id="accuracy">0%</div>
+            </div>
+        </div>
+
+        <br>
+        <div class="title">
+            <span class="dot"></span> Ranking Crew
+        </div>
+        <div id="ranking">
+            Belum ada data
+        </div>
+    </div>
+
 </div>
 
-
-<!-- ===================== PRESENTER SCREEN ===================== -->
-<div id="presenter-screen" class="screen">
-
-  <!-- Sticky header -->
-  <div class="sticky-header pt-safe px-safe">
-    <div style="padding:12px 0 10px;display:flex;justify-content:space-between;
-                align-items:center;border-bottom:1px solid var(--border);margin-bottom:2px;">
-      <div style="display:flex;align-items:center;gap:8px;">
-        <span style="font-size:20px;">📋</span>
-        <span style="font-size:18px;font-weight:900;letter-spacing:-.01em;">MONITOR QC</span>
-      </div>
-      <div id="order-count" class="badge"
-        style="background:rgba(59,130,246,.12);color:#60a5fa;">
-        0 ORDER
-      </div>
-    </div>
-  </div>
-
-  <!-- Scrollable order list -->
-  <div class="scroll-area px-safe pb-safe" style="padding-top:12px;">
-    <div id="presenter-list" style="display:flex;flex-direction:column;gap:12px;padding-bottom:32px;">
-      <div id="empty-msg"
-        style="text-align:center;color:var(--muted);padding:80px 0;font-size:14px;font-weight:600;">
-        Belum ada antrian pesanan.
-      </div>
-    </div>
-  </div>
-</div>
-
-
-<!-- Toast notification -->
-<div id="toast"></div>
-
-
-<!-- ===================== JAVASCRIPT ===================== -->
 <script>
-/* ---- Firebase ---- */
-const firebaseConfig = {
-  apiKey: "AIzaSyCbfeWmArHKHXWxhr5p9c756vl5KrJ9pUE",
-  authDomain: "akurasi-sistem.firebaseapp.com",
-  databaseURL: "https://akurasi-sistem-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "akurasi-sistem",
-  storageBucket: "akurasi-sistem.firebasestorage.app",
-  messagingSenderId: "526061479850",
-  appId: "1:526061479850:web:90462c55e0f86ab3366dd3"
+// ================================
+// CONFIG
+// ================================
+// GANTI DENGAN URL API ANDA SENDIRI
+const API_URL = "https://script.google.com/macros/s/AKfycbyTuteQYO1o4hYqS_dY_iURED4fYvrBTKo29EIolJuKLQGLTW9fFPzxKg2Os7qEjYXA/exec";
+
+const BENCHMARK = {
+    "Acin": 8,
+    "Bagor": 4,
+    "Basic": 12,
+    "Minyak Mie": 14,
+    "Adonan": 15,
+    "Lainnya": 0 // Lainnya dianggap tanpa standar (0)
 };
-firebase.initializeApp(firebaseConfig);
-const db = firebase.database();
-const ordersRef = db.ref("gacoan_orders");
 
-/* ---- Menu master ---- */
-const menuList = [
-  { id: "udang-keju",    nama: "Udang Keju",    dot:"#f97316" },
-  { id: "udang-rambutan",nama: "Udang Rambutan", dot:"#ef4444" },
-  { id: "siomay",        nama: "Siomay",         dot:"#f59e0b" },
-  { id: "lumpia-udang",  nama: "Lumpia Udang",   dot:"#3b82f6" }
-];
+let selectedItem = "Acin";
+let isOtherItem = false;
+let gramValues = [];
+let history = [];
 
-/* ---- State ---- */
-let items = {};
-let submitting = false;
+const gramGrid = document.getElementById("gramGrid");
+const statusBox = document.getElementById("status");
+const avgText = document.getElementById("avg");
+const benchmarkText = document.getElementById("benchmark");
+const otherItemInput = document.getElementById("otherItemInput");
 
-/* ---- Toast helper ---- */
-let toastTimer;
-function showToast(msg, emoji = ""){
-  const el = document.getElementById("toast");
-  el.innerHTML = emoji ? `${emoji} ${msg}` : msg;
-  el.classList.add("show");
-  clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => el.classList.remove("show"), 2200);
+// ================================
+// NAMA OUTLET
+// ================================
+function getOutletName(code){
+    const outlet = {
+        MLGMON: "MALANG MONDOROKO",
+        MLGJAK: "MALANG JAKARTA",
+        MLGSOE: "MALANG SOEKARNO HATTA",
+        MLGRON: "MALANG RONGGOWARSITO",
+        MLGDIR: "MALANG DIRGANTARA"
+    };
+    return outlet[code] || code;
 }
 
-/* ---- Audio feedback (opsional, tidak blocking) ---- */
-function tapSound(){
-  try {
-    const ctx = new (window.AudioContext || window.webkitAudioContext)();
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc.connect(gain); gain.connect(ctx.destination);
-    osc.type = "sine";
-    osc.frequency.setValueAtTime(880, ctx.currentTime);
-    gain.gain.setValueAtTime(.06, ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(.001, ctx.currentTime + .12);
-    osc.start(ctx.currentTime);
-    osc.stop(ctx.currentTime + .12);
-  } catch(e){}
+// ================================
+// KIRIM DATA KE SPREADSHEET
+// ================================
+async function sendToSheet(data){
+    try {
+        await fetch(API_URL, {
+            method: "POST",
+            mode: "no-cors",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(data)
+        });
+        console.log("Data terkirim");
+    } catch(err) {
+        console.log(err);
+    }
 }
 
-/* ---- Navigation ---- */
-function showScreen(id){
-  document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
-  document.getElementById(id).classList.add("active");
-  // Scroll to top setiap pindah screen
-  const scrollArea = document.querySelector(`#${id} .scroll-area`);
-  if(scrollArea) scrollArea.scrollTop = 0;
-}
-
-function openPacker(){
-  showScreen("packer-screen");
-  renderMenu();
-}
-
-function openPresenter(){
-  showScreen("presenter-screen");
-  listenOrders();
-}
-
-/* ---- Render menu cards ---- */
-function renderMenu(){
-  const container = document.getElementById("menu-grid");
-  let html = "";
-
-  menuList.forEach(menu => {
-    const qty  = items[menu.id]?.qty || 0;
-    const active = qty > 0;
-    html += `
-      <div class="menu-card ${active ? "active" : ""}">
-        <!-- Label -->
-        <div style="display:flex;align-items:center;gap:6px;">
-          <span style="width:8px;height:8px;border-radius:50%;background:${menu.dot};flex-shrink:0;"></span>
-          <span style="font-size:9px;font-weight:800;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;">DIMSUM</span>
-        </div>
-        <!-- Nama -->
-        <div style="font-size:16px;font-weight:900;letter-spacing:-.01em;line-height:1.25;flex:1;">
-          ${menu.nama}
-        </div>
-        <!-- Counter -->
-        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
-          <button class="qty-btn tap" onclick="minusQty('${menu.id}')"
-            style="color:#f87171;">−</button>
-          <span style="font-size:28px;font-weight:900;min-width:36px;text-align:center;
-                       color:${active ? "var(--orange)" : "var(--muted)"};">
-            ${qty}
-          </span>
-          <button class="qty-btn tap" onclick="plusQty('${menu.id}','${menu.nama}')"
-            style="color:#34d399;">+</button>
-        </div>
-      </div>
-    `;
-  });
-
-  container.innerHTML = html;
-  updateTotal();
-}
-
-function plusQty(id, nama){
-  tapSound();
-  items[id] ? items[id].qty++ : (items[id] = { id, nama, qty: 1 });
-  renderMenu();
-}
-
-function minusQty(id){
-  tapSound();
-  if(!items[id]) return;
-  items[id].qty--;
-  if(items[id].qty <= 0) delete items[id];
-  renderMenu();
-}
-
-function updateTotal(){
-  const total = Object.values(items).reduce((s, i) => s + i.qty, 0);
-  document.getElementById("total-item").textContent = total;
-}
-
-function resetOrder(){
-  tapSound();
-  items = {};
-  document.getElementById("customer-name").value = "";
-  renderMenu();
-}
-
-/* ---- Submit ---- */
-async function submitOrder(){
-  if(submitting) return;
-  const customer = document.getElementById("customer-name").value.trim();
-  if(!customer){ showToast("Masukkan nama meja / customer!", "⚠️"); return; }
-  if(Object.keys(items).length === 0){ showToast("Belum ada item yang dipilih!", "⚠️"); return; }
-
-  tapSound();
-  submitting = true;
-
-  const btn = document.getElementById("submit-btn");
-  btn.disabled = true;
-  btn.innerHTML = `<span class="spinner"></span>SAVING…`;
-
-  try {
-    await ordersRef.child(Date.now()).set({
-      customer,
-      timestamp: Date.now(),
-      status: "waiting",
-      items
-    });
-    showToast(`Order "${customer}" terkirim!`, "✅");
-    resetOrder();
-  } catch(err){
-    console.error(err);
-    showToast("Koneksi gagal, coba lagi!", "❌");
-  }
-
-  btn.disabled = false;
-  btn.innerHTML = "✓&nbsp;DONE";
-  submitting = false;
-}
-
-/* ---- Live monitor ---- */
-function listenOrders(){
-  ordersRef.on("value", snapshot => {
-    const list = document.getElementById("presenter-list");
-    const countEl = document.getElementById("order-count");
-
-    if(!snapshot.exists()){
-      list.innerHTML = `
-        <div id="empty-msg"
-          style="text-align:center;color:var(--muted);padding:80px 0;font-size:14px;font-weight:600;">
-          Belum ada antrian pesanan.
-        </div>`;
-      countEl.textContent = "0 ORDER";
-      return;
+// ================================
+// CREATE 10 INPUT GRAM
+// ================================
+function createGramInput(){
+    gramGrid.innerHTML = "";
+    gramValues = [];
+    for(let i = 0; i < 10; i++){
+        let div = document.createElement("div");
+        div.className = "gram";
+        div.innerHTML = `
+            <span>${i+1}</span>
+            <input type="number" class="gram-input" data-index="${i}" placeholder="-">
+        `;
+        gramGrid.appendChild(div);
     }
 
-    const data = snapshot.val();
-    const keys = Object.keys(data).reverse();
-    countEl.textContent = `${keys.length} ORDER`;
+    document.querySelectorAll(".gram-input").forEach(input => {
+        input.addEventListener("input", function(){
+            let index = this.dataset.index;
+            gramValues[index] = this.value === "" ? undefined : Number(this.value);
+            calculate();
+        });
+    });
+}
 
-    let html = "";
-    keys.forEach(orderId => {
-      const order = data[orderId];
-      let itemHtml = "";
-      Object.values(order.items).forEach(item => {
-        itemHtml += `
-          <div class="item-row">
-            <span style="font-weight:700;font-size:15px;">${item.nama}</span>
-            <span style="font-size:20px;font-weight:900;color:var(--orange);">×${item.qty}</span>
-          </div>`;
-      });
+createGramInput();
 
-      const jam = new Date(order.timestamp).toLocaleTimeString("id-ID", { hour:"2-digit", minute:"2-digit" });
+// ================================
+// ITEM SELECT LOGIC (UPDATED)
+// ================================
+document.querySelectorAll(".items .item").forEach(btn => {
+    btn.onclick = function(){
+        // Reset status tombol
+        document.querySelectorAll(".items .item").forEach(x => x.classList.remove("active"));
+        
+        // Aktifkan tombol yang diklik
+        this.classList.add("active");
+        
+        selectedItem = this.dataset.item;
+        
+        // Logika khusus untuk "+ Lainnya"
+        if (selectedItem === "Lainnya") {
+            isOtherItem = true;
+            otherItemInput.style.display = "block"; // Tampilkan input field pink
+            otherItemInput.focus();
+            benchmarkText.innerHTML = "Kalibrasi Bebas";
+        } else {
+            isOtherItem = false;
+            otherItemInput.style.display = "none"; // Sembunyikan input field pink
+            otherItemInput.value = ""; // Reset isi input
+            benchmarkText.innerHTML = BENCHMARK[selectedItem] + " g";
+        }
+        
+        calculate();
+    };
+});
 
-      html += `
-        <div class="order-card">
-          <div style="display:flex;justify-content:space-between;align-items:flex-start;">
-            <div>
-              <div style="font-size:17px;font-weight:900;letter-spacing:-.01em;">👤 ${order.customer}</div>
-              <div style="font-size:11px;color:var(--muted);font-weight:600;margin-top:3px;">Jam ${jam}</div>
-            </div>
-            <button onclick="finishOrder('${orderId}')" class="tap"
-              style="padding:9px 18px;border-radius:12px;border:none;
-                     background:linear-gradient(135deg,#10b981,#059669);
-                     color:#fff;font-size:12px;font-weight:900;letter-spacing:.06em;
-                     flex-shrink:0;">
-              CLEAR
-            </button>
-          </div>
-          <div style="display:flex;flex-direction:column;gap:8px;">
-            ${itemHtml}
-          </div>
-        </div>`;
+benchmarkText.innerHTML = BENCHMARK[selectedItem] + " g";
+
+// ================================
+// CALCULATION ENGINE
+// ================================
+function calculate(){
+    let data = gramValues.filter(x => x !== undefined && !isNaN(x));
+
+    if(data.length === 0){
+        avgText.innerHTML = "-";
+        statusBox.className = "status";
+        statusBox.innerHTML = "Menunggu input";
+        return;
+    }
+
+    let avg = data.reduce((a, b) => a + b, 0) / data.length;
+    avgText.innerHTML = avg.toFixed(2) + " g";
+
+    // Jika item lainnya, tidak ada standar akurasi
+    if(isOtherItem){
+        statusBox.className = "status good";
+        statusBox.innerHTML = "✓ RECORD DATA";
+        document.getElementById("accuracy").innerHTML = "100.0%";
+        return;
+    }
+
+    let target = BENCHMARK[selectedItem];
+    let deviation = Math.abs(avg - target);
+
+    if(deviation === 0){
+        statusBox.className = "status good";
+        statusBox.innerHTML = "✓ SESUAI BENCHMARK";
+    } else if(deviation <= 1){
+        statusBox.className = "status warning";
+        statusBox.innerHTML = "⚠ SELISIH 1 GRAM";
+    } else {
+        statusBox.className = "status bad";
+        statusBox.innerHTML = "✕ OUT OF STANDARD";
+    }
+
+    calculateAccuracy(avg, target);
+}
+
+// ================================
+// ACCURACY SCORE
+// ================================
+function calculateAccuracy(avg, target){
+    if(target === 0) {
+        document.getElementById("accuracy").innerHTML = "100.0%";
+        return;
+    }
+    let accuracy = 100 - (Math.abs(avg - target) / target * 100);
+    if(accuracy < 0) accuracy = 0;
+    document.getElementById("accuracy").innerHTML = accuracy.toFixed(1) + "%";
+}
+
+// ================================
+// RANKING CREW
+// ================================
+function renderRanking(){
+    let rank = {};
+
+    history.forEach(x => {
+        if(!rank[x.CREW]){
+            rank[x.CREW] = [];
+        }
+        rank[x.CREW].push(Number(x.SCORE));
     });
 
-    list.innerHTML = html;
-  });
+    let result = [];
+    Object.keys(rank).forEach(name => {
+        let avg = rank[name].reduce((a, b) => a + b, 0) / rank[name].length;
+        result.push({
+            name: name,
+            score: avg
+        });
+    });
+
+    result.sort((a, b) => b.score - a.score);
+
+    let html = "";
+    result.forEach((x, i) => {
+        html += `
+            <div class="rank-item">
+                <b>${i+1}. ${x.name}</b>
+                <span>${x.score.toFixed(1)}%</span>
+            </div>
+        `;
+    });
+
+    document.getElementById("ranking").innerHTML = html || "Belum ada data";
 }
 
-function finishOrder(orderId){
-  tapSound();
-  ordersRef.child(orderId).remove();
+// ================================
+// DASHBOARD COUNTER
+// ================================
+function updateDashboard(){
+    document.getElementById("totalTrial").innerHTML = history.length;
+
+    if(history.length > 0){
+        let avgScore = history.reduce((a, b) => a + Number(b.SCORE), 0) / history.length;
+        document.getElementById("accuracy").innerHTML = avgScore.toFixed(1) + "%";
+    }
 }
+
+// ================================
+// SAVE DATA (UPDATED)
+// ================================
+document.getElementById("save").addEventListener("click", () => {
+    let crew = document.getElementById("crew").value.trim();
+    let outlet = document.getElementById("outlet").value;
+    let data = gramValues.filter(x => x !== undefined && !isNaN(x));
+    
+    // Tentukan nama item yang akan disimpan
+    let finalItemName = selectedItem;
+    if (isOtherItem) {
+        finalItemName = otherItemInput.value.trim();
+        if (!finalItemName) {
+            finalItemName = "Lainnya (Tanpa Nama)";
+        }
+    }
+
+    if(!crew){
+        alert("Isi nama crew dahulu");
+        return;
+    }
+
+    if(data.length < 10){
+        alert("Lengkapi 10 trial");
+        return;
+    }
+
+    let avg = data.reduce((a, b) => a + b, 0) / 10;
+    
+    let target, deviation, status, score;
+
+    // Logika perhitungan data berbeda jika "+ Lainnya"
+    if (isOtherItem) {
+        target = 0;
+        deviation = 0;
+        status = "OK (Record)";
+        score = 100; // Selalu 100% karena tidak ada pembanding
+    } else {
+        target = BENCHMARK[selectedItem];
+        deviation = Math.abs(avg - target);
+        status = "NG";
+        if(deviation === 0){
+            status = "OK";
+        } else if(deviation <= 1){
+            status = "WARNING";
+        }
+        score = 100 - (deviation / target * 100);
+        if(score < 0) score = 0;
+    }
+
+    let result = {
+        DATE: new Date().toLocaleString(),
+        OUTLETCODE: outlet,
+        ITEM: finalItemName, // Menggunakan nama dari input field jika ada
+        CREW: crew,
+        BENCHMARK: target,
+        DATA: data.join(","),
+        AVERAGE: avg.toFixed(2),
+        DEVIATION: deviation.toFixed(2),
+        STATUS: status,
+        SCORE: score.toFixed(1)
+    };
+
+    history.push(result);
+
+    sendToSheet({
+        OUTLETCODE: result.OUTLETCODE,
+        OUTLETNAME: getOutletName(result.OUTLETCODE),
+        CREW: result.CREW,
+        ITEM: result.ITEM,
+        BENCHMARK: result.BENCHMARK === 0 ? "-" : result.BENCHMARK,
+        TRIAL: result.DATA,
+        AVERAGE: result.AVERAGE,
+        DEVIATION: result.DEVIATION,
+        STATUS: result.STATUS,
+        SCORE: result.SCORE
+    });
+
+    renderRanking();
+    updateDashboard();
+
+    alert("Kalibrasi tersimpan untuk item: " + finalItemName);
+
+    // Reset Form
+    createGramInput();
+    avgText.innerHTML = "-";
+    statusBox.className = "status";
+    statusBox.innerHTML = "Menunggu input";
+    if (isOtherItem) {
+        otherItemInput.value = "";
+    }
+});
 </script>
+
 </body>
 </html>
