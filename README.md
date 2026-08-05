@@ -427,7 +427,7 @@
 
         <br><br>
         <label for="targetInput">Target / Acuan (gram)</label>
-        <input type="number" id="targetInput" placeholder="misalnya: 8" step="0.1">
+        <input type="number" id="targetInput" placeholder="mis. 8" step="0.1">
     </div>
 
     <!-- GRAMASI -->
@@ -764,9 +764,6 @@ function updateTempTable(){
 document.getElementById("finalSend").addEventListener("click", async function() {
     if(tempCart.length === 0) { alert("Keranjang kosong!"); return; }
 
-    this.disabled = true;
-    this.innerHTML = "Sedang Memproses...";
-
     // 1. FORMAT TEKS UNTUK WA
     let outletName = getOutletName(tempCart[0].outletCode);
     let tgl = new Date().toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
@@ -784,7 +781,20 @@ document.getElementById("finalSend").addEventListener("click", async function() 
         textWa += `Data: [${x.data}]\n\n`;
     });
 
-    // 2. KIRIM DATA KE SPREADSHEET SATU PER SATU
+    // 2. BUKA WA SEGERA (di dalam handler klik yang sama) SUPAYA TIDAK DIBLOKIR POPUP BLOCKER
+    //    Harus terjadi tanpa jeda "await" sebelum window.open dipanggil.
+    let urlWa = `https://wa.me/?text=${encodeURIComponent(textWa)}`;
+    let waTab = window.open(urlWa, '_blank');
+
+    if (!waTab) {
+        alert("Browser memblokir tab WhatsApp. Mohon izinkan popup untuk situs ini, lalu coba lagi.");
+        return;
+    }
+
+    this.disabled = true;
+    this.innerHTML = "Mengirim ke Spreadsheet...";
+
+    // 3. KIRIM DATA KE SPREADSHEET SATU PER SATU
     let successCount = 0;
     for (let itemData of tempCart) {
         let payload = {
@@ -815,11 +825,11 @@ document.getElementById("finalSend").addEventListener("click", async function() 
         }
     }
 
-    alert(`${successCount} data berhasil dikirim ke Spreadsheet. Silakan pilih kontak/grup WhatsApp tujuan.`);
-
-    // 3. BUKA WHATSAPP TANPA NOMOR TUJUAN — user pilih kontak/grup sendiri
-    let urlWa = `https://wa.me/?text=${encodeURIComponent(textWa)}`;
-    window.open(urlWa, '_blank');
+    if (successCount === tempCart.length) {
+        console.log(`${successCount} data berhasil dikirim ke Spreadsheet.`);
+    } else {
+        alert(`Hanya ${successCount} dari ${tempCart.length} data berhasil dikirim ke Spreadsheet. Cek koneksi lalu coba kirim ulang jika perlu.`);
+    }
 
     // 4. RESET SEMUANYA
     tempCart = [];
