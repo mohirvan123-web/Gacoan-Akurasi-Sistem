@@ -1,8 +1,9 @@
+<!DOCTYPE html>
 <html lang="id">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gacoan Calibration System</title>
+    <title>Kalibrasi Gacoan Singosari</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700;800;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
     <style>
@@ -44,6 +45,9 @@
             border-radius: 22px;
             padding: 20px;
             box-shadow: 0 8px 25px rgba(0,0,0,.05);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
         }
 
         .brand {
@@ -72,11 +76,6 @@
             font-weight: 900;
         }
 
-        .subtitle {
-            font-size: 12px;
-            color: var(--soft);
-        }
-
         /* CARD */
         .card {
             background: white;
@@ -95,6 +94,7 @@
             display: flex;
             gap: 8px;
             align-items: center;
+            color: var(--text);
         }
 
         .dot {
@@ -154,28 +154,26 @@
             border-color: var(--pink);
         }
 
-        /* Styling spesifik untuk "+ Lainnya" */
-        .item-other.active {
-            background: var(--blue);
-            border-color: var(--blue);
-        }
-
-        /* INPUT UNTUK ITEM LAINNYA */
         #otherItemInput {
             margin-top: 10px;
             border-color: var(--pink);
             display: none;
         }
 
-        #otherItemInput:focus {
-            box-shadow: 0 0 0 3px rgba(236, 26, 107, 0.15);
+        /* ROW SHIFT/DATE */
+        .row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 20px;
         }
 
-        /* GRAM INPUT */
+        /* GRAM INPUT & PROGRESS */
         .gram-grid {
             display: grid;
             grid-template-columns: repeat(5, 1fr);
             gap: 8px;
+            margin-bottom: 10px;
         }
 
         .gram {
@@ -198,43 +196,80 @@
             background: #FFF5FA;
         }
 
-        /* STATUS */
-        .status {
-            margin-top: 12px;
-            padding: 12px;
-            border-radius: 15px;
-            text-align: center;
-            font-weight: 800;
-            font-size: 14px;
+        /* PROGRESS BAR & COUNTER (FITUR BARU) */
+        .progress-container {
+            width: 100%;
+            margin-bottom: 15px;
         }
 
-        .status.good { background: #DCFCE7; color: #15803D; }
-        .status.warning { background: #FEF3C7; color: #B45309; }
-        .status.bad { background: #FEE2E2; color: #B91C1C; }
+        .progress-bar-bg {
+            width: 100%;
+            height: 6px;
+            background: #EADCE5;
+            border-radius: 100px;
+            overflow: hidden;
+            position: relative;
+        }
 
-        /* RESULT */
+        .progress-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--blue), var(--pink));
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .progress-counter {
+            text-align: right;
+            font-size: 11px;
+            color: var(--soft);
+            margin-bottom: 4px;
+            font-weight: 600;
+        }
+
+        /* RESULT STATS */
         .stats {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 10px;
             margin-top: 15px;
+            margin-bottom: 15px;
         }
 
         .stat {
             padding: 15px;
             border-radius: 18px;
-            background: #FFF0F7;
+            background: white;
+            border: 1px solid var(--border);
             text-align: center;
         }
 
-        .stat.blue { background: #EAFBFF; }
-        .stat-title { font-size: 11px; font-weight: 700; color: var(--soft); }
-        .stat-value { font-family: Poppins; font-size: 25px; font-weight: 900; margin-top: 5px; }
+        .stat-title {
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--soft);
+            text-transform: uppercase;
+        }
 
-        /* BUTTON */
+        .stat-value {
+            font-family: Poppins;
+            font-size: 28px;
+            font-weight: 900;
+            margin-top: 5px;
+        }
+
+        .stat-avg .stat-value { color: var(--pink); }
+        .stat-mode .stat-value { color: var(--blue); }
+
+        .stat-unit {
+            font-size: 12px;
+            color: var(--soft);
+            margin-top: -3px;
+            display: block;
+        }
+
+        /* BUTTONS */
         button {
             width: 100%;
-            margin-top: 15px;
             padding: 15px;
             border: none;
             border-radius: 16px;
@@ -242,67 +277,84 @@
             font-size: 15px;
             font-weight: 800;
             cursor: pointer;
-            transition: background 0.2s;
-        }
-
-        .btn-primary {
-            background: linear-gradient(120deg, var(--pink), var(--pink-dark));
-            color: white;
-        }
-        
-        .btn-primary:hover { background: var(--pink-dark); }
-
-        .btn-wa {
-            background: #25D366;
-            color: white;
+            transition: all 0.2s;
             display: flex;
             align-items: center;
             justify-content: center;
             gap: 8px;
         }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not_allowed;
+        }
+
+        .btn-save {
+            background: linear-gradient(120deg, var(--pink), var(--pink-dark));
+            color: white;
+            margin-bottom: 10px;
+        }
         
+        .btn-save:hover { background: var(--pink-dark); }
+
+        .btn-clean {
+            background: none;
+            color: var(--soft);
+            font-size: 13px;
+            font-weight: 600;
+            padding: 5px;
+            margin-top: 5px;
+        }
+
+        .btn-wa {
+            background: var(--green);
+            color: white;
+            margin-top: 20px;
+        }
         .btn-wa:hover { background: #1da851; }
 
-        /* TABEL PENYIMPANAN SEMENTARA (FITUR LAMA) */
-        .temp-storage {
-            margin-top: 20px;
-            overflow-x: auto;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 12px;
-            background: white;
-            border-radius: 12px;
-            overflow: hidden;
+        .btn-delete {
+            background: none;
             border: 1px solid var(--border);
-        }
-
-        th, td {
-            text-align: left;
-            padding: 10px;
-            border-bottom: 1px solid var(--border);
-        }
-
-        th {
-            background: #F8FAFC;
             color: var(--soft);
-            text-transform: uppercase;
-            font-weight: 700;
+            margin-top: 10px;
+            font-size: 13px;
+        }
+        .btn-delete:hover { background: #FFF1F1; border-color: var(--red); color: var(--red); }
+
+        /* RIWAYAT (FITUR LAMA) */
+        .history-list {
+            margin-top: 10px;
         }
 
-        tr:last-child td { border-bottom: none; }
-        
-        .status-badge {
-            padding: 2px 6px;
-            border-radius: 4px;
-            font-weight: 700;
-            font-size: 10px;
+        .history-item {
+            padding: 12px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
-        .bg-ok { background: #DCFCE7; color: #15803D; }
-        .bg-warn { background: #FEF3C7; color: #B45309; }
-        .bg-ng { background: #FEE2E2; color: #B91C1C; }
+
+        .history-item:last-child { border-bottom: none; }
+
+        .history-meta {
+            font-size: 12px;
+            color: var(--soft);
+        }
+
+        .history-avg {
+            font-family: Poppins;
+            font-weight: 800;
+            font-size: 16px;
+            color: var(--pink);
+        }
+
+        .empty-state {
+            text-align: center;
+            color: var(--soft);
+            font-size: 13px;
+            padding: 20px;
+        }
 
     </style>
 </head>
@@ -311,31 +363,14 @@
 <div class="app">
 
     <!-- HEADER -->
-    <div class="header">
+    <div class="header card">
         <div class="brand">
             <div class="logo">G</div>
-            <div>
-                <h1>Calibration System</h1>
-                <div class="subtitle">Deviation Decrease</div>
-            </div>
+            <h1>Kalibrasi Gacoan Singosari</h1>
         </div>
     </div>
 
-    <!-- OUTLET -->
-    <div class="card">
-        <div class="title">
-            <span class="dot"></span> Outlet
-        </div>
-        <select id="outlet">
-            <option value="MLGMON">MLGMON - MALANG MONDOROKO</option>
-            <option value="MLGJAK">MLGJAK - MALANG JAKARTA</option>
-            <option value="MLGSOE">MLGSOE - MALANG SOEKARNO HATTA</option>
-            <option value="MLGRON">MLGRON - MALANG RONGGOWARSITO</option>
-            <option value="MLGDIR">MLGDIR - MALANG DIRGANTARA</option>
-        </select>
-    </div>
-
-    <!-- INPUT -->
+    <!-- CARD INPUT -->
     <div class="card">
         <div class="title">
             <span class="dot"></span> Input Kalibrasi
@@ -347,76 +382,80 @@
 
         <label>Item Kalibrasi</label>
         <div class="items">
-            <div class="item active" data-item="Acin">Acin (8g)</div>
-            <div class="item" data-item="Bagor">Bagor (4g)</div>
-            <div class="item" data-item="Basic">Basic (12g)</div>
-            <div class="item" data-item="Minyak Mie">Minyak Mie (14g)</div>
-            <div class="item" data-item="Adonan">Adonan (15g)</div>
+            <div class="item active" data-item="Acin">Acin</div>
+            <div class="item" data-item="Bagor">Bagor</div>
+            <div class="item" data-item="Basic">Basic</div>
+            <div class="item" data-item="Minyak Mie">Minyak Mie</div>
             <div class="item item-other" data-item="Lainnya">+ Lainnya</div>
         </div>
-        
-        <input type="text" id="otherItemInput" placeholder="Atau ketik item lain...">
-    </div>
+        <input type="text" id="otherItemInput" placeholder="Ketik item lain...">
+        <br>
 
-    <!-- GRAMASI -->
-    <div class="card">
-        <div class="title">
-            <span class="dot"></span> 10 Trial Gramasi
+        <div class="row">
+            <div>
+                <label for="shift">Shift</label>
+                <select id="shift">
+                    <option>Morning</option>
+                    <option selected>Middle</option>
+                    <option>Evening</option>
+                </select>
+            </div>
+            <div>
+                <label>Tanggal</label>
+                <input type="text" id="dateDisplay" readonly style="background:#F1F5F9; color:var(--soft);">
+            </div>
         </div>
 
+        <label>Gramasi (10 Percobaan)</label>
         <div class="gram-grid" id="gramGrid"></div>
-        <div id="status" class="status">Menunggu input</div>
+
+        <!-- PROGRESS BAR & COUNTER (FITUR BARU) -->
+        <div class="progress-container">
+            <div class="progress-counter" id="progressCounter">0 / 10 terisi</div>
+            <div class="progress-bar-bg">
+                <div class="progress-bar-fill" id="progressBarFill"></div>
+            </div>
+        </div>
 
         <div class="stats">
-            <div class="stat">
-                <div class="stat-title">Average</div>
+            <div class="stat stat-avg">
+                <div class="stat-title">AVERAGE</div>
                 <div class="stat-value" id="avg">-</div>
+                <span class="stat-unit">gram</span>
             </div>
-            <div class="stat blue">
-                <div class="stat-title">Benchmark</div>
-                <div class="stat-value" id="benchmark">-</div>
+            <div class="stat stat-mode">
+                <div class="stat-title">MODUS</div>
+                <div class="stat-value" id="mode">-</div>
+                <span class="stat-unit" id="modeCount">gram</span>
             </div>
         </div>
 
-        <!-- Tombol ini sekarang berfungsi memasukkan ke keranjang sementara -->
-        <button class="btn-primary" id="saveToTemp">
-            Simpan & Tambah Item Lain
+        <!-- Tombol Simpan ke Sheet & Lokal -->
+        <button class="btn-save" id="saveCalibration">
+            <!-- Icon floppy disk sederhana -->
+            <svg width="18" height="18" viewBox="0 0 448 512" fill="white"><path d="M433.941 129.941l-83.882-83.882A48 48 0 0 0 316.118 32H48C21.49 32 0 53.49 0 80v352c0 26.51 21.49 48 48 48h352c0 26.51 48 21.49 48-48V161.882a48 48 0 0 0-14.059-33.941zM224 416c-35.343 0-64-28.657-64-64s28.657-64 64-64 64 28.657 64 64-28.657 64-64 64zm96-304.52V212c0 6.627-5.373 12-12 12H76c-6.627 0-12-5.373-12-12V108c0-6.627 5.373-12 12-12h228.52c3.183 0 6.235 1.264 8.485 3.515l3.515 3.515c2.251 2.251 3.515 5.303 3.515 8.485z"/></svg>
+            Simpan Kalibrasi
         </button>
+        <button class="btn-clean" id="clearForm">Bersihkan form</button>
     </div>
 
-    <!-- TABEL PENYIMPANAN SEMENTARA & PENGIRIMAN (FITUR LAMA YANG DIKEMBALIKAN) -->
-    <div class="card" id="tempStorageCard" style="display:none;">
+    <!-- CARD RIWAYAT (FITUR LAMA) -->
+    <div class="card">
         <div class="title">
-            <span class="dot"></span> Data Siap Kirim (Keranjang)
+            <span class="dot"></span> Riwayat Hari Ini
         </div>
-
-        <div class="temp-storage">
-            <table id="tempTable">
-                <thead>
-                    <tr>
-                        <th>Item</th>
-                        <th>Rata-rata</th>
-                        <th>Status</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <!-- Data dummy akan masuk disini -->
-                </tbody>
-            </table>
+        <div id="historyList" class="history-list">
+            <div class="empty-state">Belum ada kalibrasi tersimpan hari ini.</div>
         </div>
-        
-        <br>
-        <label for="waNumber">Nomor WhatsApp Tujuan</label>
-        <input type="number" id="waNumber" placeholder="Contoh: 628123456789" value="628">
-        <p style="font-size:10px; color:var(--soft); margin-top:3px;">*Gunakan kode negara, misal 628...</p>
-
-        <!-- Tombol final untuk mengirim ke WA dan Spreadsheet sekaligus -->
-        <button class="btn-wa" id="finalSend">
-            <!-- Icon WA sederhana -->
-            <svg width="20" height="20" viewBox="0 0 448 512" fill="white"><path d="M380.9 97.1C339 55.1 283.2 32 223.9 32c-122.4 0-222 99.6-222 222 0 39.1 10.2 77.3 29.6 111L3 480l117.7-30.9c32.4 17.7 68.9 27 106.1 27h.1c122.3 0 224.1-99.6 224.1-222 0-59.3-25.2-115-67.1-117zm-157 338.7h-.1c-34 0-67.3-9.2-96.5-26.3L97 435.8l24.6-89.9c-18.7-29.7-28.6-64.1-28.6-99.3 0-108.6 88.4-197 197-197 52.6 0 102 20.5 139.1 57.6s57.6 86.5 57.6 139.1c0 108.6-88.4 197-197 197zm105.1-147.5c-5.8-2.9-34.1-16.8-39.4-18.8-5.3-2-9.1-2.9-13.1 2.9-3.9 5.8-15.3 18.8-18.8 22.7-3.4 3.9-6.9 4.4-12.6 1.5-5.8-2.9-24.3-8.9-46.3-28.5-17.1-15.3-28.7-34.2-32.1-40-3.4-5.8-.4-8.9 2.5-11.8 2.6-2.6 5.8-6.8 8.7-10.1 2.9-3.4 3.9-5.8 5.8-9.6 1.9-3.9.9-7.4-.5-10.3-1.4-2.9-13.1-31.5-18-43.3-4.7-11.5-9.6-9.9-13.1-10.1-3.4-.2-7.3-.2-11.2-.2-3.9 0-10.3 1.5-15.7 7.4-5.4 5.8-20.7 20.3-20.7 49.4 0 29.1 21.2 57.2 24.1 61.2 2.9 3.9 41.5 63.4 100.6 88.9 14.1 6.1 25.1 9.8 33.6 12.5 14.1 4.5 27 3.9 37.1 2.4 11.2-1.7 34.1-13.9 38.9-27.3 4.8-13.4 4.8-24.9 3.4-27.3-1.5-2.4-5.3-3.9-11.2-6.8z"/></svg>
-            Kirim Semua (WA & Spreadsheet)
-        </button>
     </div>
+
+    <!-- TOMBOL KIRIM WA (ALUR PICKER) -->
+    <button class="btn-wa" id="sendRekapWa">
+        <!-- Icon WA -->
+        <svg width="18" height="18" viewBox="0 0 448 512" fill="white"><path d="M380.9 97.1C339 55.1 283.2 32 223.9 32c-122.4 0-222 99.6-222 222 0 39.1 10.2 77.3 29.6 111L3 480l117.7-30.9c32.4 17.7 68.9 27 106.1 27h.1c122.3 0 224.1-99.6 224.1-222 0-59.3-25.2-115-67.1-117zm-157 338.7h-.1c-34 0-67.3-9.2-96.5-26.3L97 435.8l24.6-89.9c-18.7-29.7-28.6-64.1-28.6-99.3 0-108.6 88.4-197 197-197 52.6 0 102 20.5 139.1 57.6s57.6 86.5 57.6 139.1c0 108.6-88.4 197-197 197zm105.1-147.5c-5.8-2.9-34.1-16.8-39.4-18.8-5.3-2-9.1-2.9-13.1 2.9-3.9 5.8-15.3 18.8-18.8 22.7-3.4 3.9-6.9 4.4-12.6 1.5-5.8-2.9-24.3-8.9-46.3-28.5-17.1-15.3-28.7-34.2-32.1-40-3.4-5.8-.4-8.9 2.5-11.8 2.6-2.6 5.8-6.8 8.7-10.1 2.9-3.4 3.9-5.8 5.8-9.6 1.9-3.9.9-7.4-.5-10.3-1.4-2.9-13.1-31.5-18-43.3-4.7-11.5-9.6-9.9-13.1-10.1-3.4-.2-7.3-.2-11.2-.2-3.9 0-10.3 1.5-15.7 7.4-5.4 5.8-20.7 20.3-20.7 49.4 0 29.1 21.2 57.2 24.1 61.2 2.9 3.9 41.5 63.4 100.6 88.9 14.1 6.1 25.1 9.8 33.6 12.5 14.1 4.5 27 3.9 37.1 2.4 11.2-1.7 34.1-13.9 38.9-27.3 4.8-13.4 4.8-24.9 3.4-27.3-1.5-2.4-5.3-3.9-11.2-6.8z"/></svg>
+        Susun Rekap & Kirim ke WhatsApp
+    </button>
+    <button class="btn-delete" id="deleteAllHistory">Hapus Semua Riwayat Hari Ini</button>
 
 </div>
 
@@ -426,36 +465,28 @@
 // ================================
 // GANTI DENGAN URL API ANDA DARI GOOGLE APPS SCRIPT
 const API_URL = "https://script.google.com/macros/s/AKfycbyTuteQYO1o4hYqS_dY_iURED4fYvrBTKo29EIolJuKLQGLTW9fFPzxKg2Os7qEjYXA/exec";
-
-const BENCHMARK = {
-    "Acin": 8, "Bagor": 4, "Basic": 12, "Minyak Mie": 14, "Adonan": 15, "Lainnya": 0
-};
+const NAMA_RESTO = "Gacoan Singosari";
 
 let selectedItem = "Acin";
 let isOtherItem = false;
 let gramValues = [];
 
-// KERANJANG SEMENTARA (FITUR LAMA)
-let tempCart = [];
+// PENYIMPANAN LOKAL (UNTUK REKAP)
+let dailyHistory = [];
 
 const gramGrid = document.getElementById("gramGrid");
-const statusBox = document.getElementById("status");
 const avgText = document.getElementById("avg");
-const benchmarkText = document.getElementById("benchmark");
+const modeText = document.getElementById("mode");
+const modeCountText = document.getElementById("modeCount");
 const otherItemInput = document.getElementById("otherItemInput");
-const tempStorageCard = document.getElementById("tempStorageCard");
-const tempTableBody = document.querySelector("#tempTable tbody");
+const dateDisplay = document.getElementById("dateDisplay");
+const progressCounter = document.getElementById("progressCounter");
+const progressBarFill = document.getElementById("progressBarFill");
+const historyList = document.getElementById("historyList");
 
-// ================================
-// NAMA OUTLET
-// ================================
-function getOutletName(code){
-    const outlet = {
-        MLGMON: "MALANG MONDOROKO", MLGJAK: "MALANG JAKARTA", MLGSOE: "MALANG SOEKARNO HATTA",
-        MLGRON: "MALANG RONGGOWARSITO", MLGDIR: "MALANG DIRGANTARA"
-    };
-    return outlet[code] || code;
-}
+// Tampilkan Tanggal Hari Ini
+const today = new Date();
+dateDisplay.value = today.toLocaleDateString('id-ID', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' });
 
 // ================================
 // CREATE 10 INPUT GRAM
@@ -477,15 +508,17 @@ function createGramInput(){
         input.addEventListener("input", function(){
             let index = this.dataset.index;
             gramValues[index] = this.value === "" ? undefined : Number(this.value);
+            updateProgress();
             calculate();
         });
     });
+    updateProgress(); // init 0/10
 }
 
 createGramInput();
 
 // ================================
-// LOGIKA PEMILIHAN ITEM
+// PEMILIHAN ITEM
 // ================================
 document.querySelectorAll(".items .item").forEach(btn => {
     btn.onclick = function(){
@@ -497,61 +530,62 @@ document.querySelectorAll(".items .item").forEach(btn => {
             isOtherItem = true;
             otherItemInput.style.display = "block";
             otherItemInput.focus();
-            benchmarkText.innerHTML = "Kalibrasi Bebas";
         } else {
             isOtherItem = false;
             otherItemInput.style.display = "none";
             otherItemInput.value = "";
-            benchmarkText.innerHTML = BENCHMARK[selectedItem] + " g";
         }
         calculate();
     };
 });
 
-benchmarkText.innerHTML = BENCHMARK[selectedItem] + " g";
+// ================================
+// UPDATE PROGRESS (FITUR BARU)
+// ================================
+function updateProgress() {
+    let filledCount = gramValues.filter(x => x !== undefined && !isNaN(x)).length;
+    progressCounter.innerHTML = `${filledCount} / 10 terisi`;
+    let percentage = (filledCount / 10) * 100;
+    progressBarFill.style.width = `${percentage}%`;
+}
 
 // ================================
-// MESIN KALKULASI
+// MESIN KALKULASI (MEAN & MODUS)
 // ================================
 function calculate(){
     let data = gramValues.filter(x => x !== undefined && !isNaN(x));
 
     if(data.length === 0){
-        avgText.innerHTML = "-";
-        statusBox.className = "status";
-        statusBox.innerHTML = "Menunggu input";
-        return;
+        avgText.innerHTML = "-"; modeText.innerHTML = "-"; modeCountText.innerHTML = "gram"; return;
     }
 
+    // 1. MEAN
     let avg = data.reduce((a, b) => a + b, 0) / data.length;
-    avgText.innerHTML = avg.toFixed(2) + " g";
+    avgText.innerHTML = avg.toFixed(2);
 
-    if(isOtherItem){
-        statusBox.className = "status good";
-        statusBox.innerHTML = "✓ RECORD DATA";
-        return;
+    // 2. MODUS
+    let modeMap = {}; let maxCount = 0; let modes = [];
+    data.forEach(num => {
+        modeMap[num] = (modeMap[num] || 0) + 1;
+        if (modeMap[num] > maxCount) maxCount = modeMap[num];
+    });
+    for (let num in modeMap) {
+        if (modeMap[num] === maxCount) modes.push(num);
     }
-
-    let target = BENCHMARK[selectedItem];
-    let deviation = Math.abs(avg - target);
-
-    if(deviation === 0){
-        statusBox.className = "status good";
-        statusBox.innerHTML = "✓ SESUAI BENCHMARK";
-    } else if(deviation <= 1){
-        statusBox.className = "status warning";
-        statusBox.innerHTML = "⚠ SELISIH 1 GRAM";
+    if(maxCount > 1) {
+        modeText.innerHTML = modes.join(", ");
+        modeCountText.innerHTML = `gram (${maxCount}x)`;
     } else {
-        statusBox.className = "status bad";
-        statusBox.innerHTML = "✕ OUT OF STANDARD";
+        modeText.innerHTML = "-"; modeCountText.innerHTML = "gram";
     }
 }
 
 // ================================
-// FITUR LAMA: SIMPAN SEMENTARA KE KERANJANG
+// SIMPAN KE SHEET & LOKAL (GABUNGAN FITUR)
 // ================================
-document.getElementById("saveToTemp").addEventListener("click", () => {
+document.getElementById("saveCalibration").addEventListener("click", async function() {
     let crew = document.getElementById("crew").value.trim();
+    let shift = document.getElementById("shift").value;
     let data = gramValues.filter(x => x !== undefined && !isNaN(x));
     
     let finalItemName = selectedItem;
@@ -560,147 +594,133 @@ document.getElementById("saveToTemp").addEventListener("click", () => {
         if (!finalItemName) finalItemName = "Lainnya (Tanpa Nama)";
     }
 
+    // Validasi
     if(!crew){ alert("Isi nama crew dahulu"); return; }
-    if(data.length < 10){ alert("Lengkapi 10 trial gramasi"); return; }
+    if(data.length < 10){ alert("Lengkapi 10 trial (10/10 terisi) sebelum menyimpan."); return; }
+
+    this.disabled = true;
+    this.innerHTML = "Menyimpan...";
 
     let avg = data.reduce((a, b) => a + b, 0) / 10;
-    let target = BENCHMARK[selectedItem];
     
-    let deviation = 0;
-    let status = "OK";
-    let score = 100;
+    // Hitung Modus untuk data lokal
+    let modeMap = {}; let maxCount = 0; let modes = [];
+    data.forEach(num => { modeMap[num] = (modeMap[num] || 0) + 1; if (modeMap[num] > maxCount) maxCount = modeMap[num]; });
+    for (let num in modeMap) { if (modeMap[num] === maxCount) modes.push(num); }
+    let modusFormatted = maxCount > 1 ? `${modes.join(", ")} (${maxCount}x)` : "-";
 
-    if(selectedItem !== "Lainnya"){
-        deviation = Math.abs(avg - target);
-        status = "NG";
-        if(deviation === 0) status = "OK";
-        else if(deviation <= 1) status = "WARNING";
-        score = 100 - (deviation / target * 100);
-        if(score < 0) score = 0;
-    }
-
-    // Masukkan data ke object untuk dikirim nanti
-    let result = {
-        outletCode: document.getElementById("outlet").value,
+    // 1. Simpan Secara Lokal (Untuk Rekap WA)
+    let logData = {
+        time: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }),
         crew: crew,
         item: finalItemName,
-        benchmark: target === 0 ? "-" : target,
-        data: data.join(","),
+        shift: shift,
+        data: data.join(", "),
         average: avg.toFixed(2),
-        deviation: deviation.toFixed(2),
-        status: status,
-        score: score.toFixed(1)
+        modus: modusFormatted
+    };
+    dailyHistory.push(logData);
+    updateHistoryUI();
+
+    // 2. Kirim ke Google Spreadsheet (Untuk Database Pusat)
+    let payload = {
+        NAMA_RESTO: NAMA_RESTO,
+        CREW: crew,
+        ITEM: finalItemName,
+        SHIFT: shift,
+        TRIAL_DATA: data.join(", "),
+        AVERAGE: avg.toFixed(2)
     };
 
-    // Tambah ke keranjang
-    tempCart.push(result);
-    updateTempTable();
-    
-    // Tampilkan card keranjang
-    tempStorageCard.style.display = "block";
+    try {
+        await fetch(API_URL, {
+            method: "POST",
+            mode: "no-cors",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+        });
+        console.log("Data berhasil dikirim ke Spreadsheet");
+        alert(`Kalibrasi ${finalItemName} tersimpan di riwayat dan database.`);
+    } catch(err) {
+        console.error("Gagal mengirim ke Spreadsheet", err);
+        alert(`Kalibrasi ${finalItemName} tersimpan di riwayat lokal, namun GAGAL mengirim ke database pusat. Cek koneksi.`);
+    }
 
-    // Reset Form Input Gramasi saja (Nama Crew & Outlet tetap)
+    // Reset Form Gramasi
     createGramInput();
-    avgText.innerHTML = "-";
-    statusBox.className = "status";
-    statusBox.innerHTML = "Menunggu input";
+    avgText.innerHTML = "-"; modeText.innerHTML = "-"; modeCountText.innerHTML = "gram";
     if (isOtherItem) otherItemInput.value = "";
     
-    alert(`Item ${finalItemName} ditambahkan ke keranjang siapkan kirim.`);
+    this.disabled = false;
+    this.innerHTML = `<svg width="18" height="18" viewBox="0 0 448 512" fill="white"><path d="M433.941 129.941l-83.882-83.882A48 48 0 0 0 316.118 32H48C21.49 32 0 53.49 0 80v352c0 26.51 21.49 48 48 48h352c0 26.51 48 21.49 48-48V161.882a48 48 0 0 0-14.059-33.941zM224 416c-35.343 0-64-28.657-64-64s28.657-64 64-64 64 28.657 64 64-28.657 64-64 64zm96-304.52V212c0 6.627-5.373 12-12 12H76c-6.627 0-12-5.373-12-12V108c0-6.627 5.373-12 12-12h228.52c3.183 0 6.235 1.264 8.485 3.515l3.515 3.515c2.251 2.251 3.515 5.303 3.515 8.485z"/></svg> Simpan Kalibrasi`;
 });
 
-// Update tampilan tabel keranjang
-function updateTempTable(){
-    tempTableBody.innerHTML = "";
-    tempCart.forEach(x => {
-        let badgeClass = "bg-ng";
-        if(x.status === "OK") badgeClass = "bg-ok";
-        if(x.status === "WARNING") badgeClass = "bg-warn";
+// Update Tampilan Riwayat Lokal
+function updateHistoryUI() {
+    if (dailyHistory.length === 0) {
+        historyList.innerHTML = '<div class="empty-state">Belum ada kalibrasi tersimpan hari ini.</div>';
+        return;
+    }
 
-        let row = `<tr>
-            <td><b>${x.item}</b><br><span style="color:var(--soft); font-size:10px;">Crew: ${x.crew}</span></td>
-            <td style="font-family:Poppins; font-weight:800; font-size:14px;">${x.average}g</td>
-            <td><span class="status-badge ${badgeClass}">${x.status}</span></td>
-        </tr>`;
-        tempTableBody.innerHTML += row;
+    historyList.innerHTML = "";
+    dailyHistory.forEach(x => {
+        let item = `
+            <div class="history-item">
+                <div>
+                    <b>${x.item}</b>
+                    <div class="history-meta">${x.time} | Crew: ${x.crew} | ${x.shift}</div>
+                </div>
+                <div class="history-avg">${x.average}g</div>
+            </div>
+        `;
+        historyList.innerHTML += item;
     });
 }
 
-// ================================
-// FITUR FINAL: KIRIM WA & SPREADSHEET
-// ================================
-document.getElementById("finalSend").addEventListener("click", async function() {
-    if(tempCart.length === 0) { alert("Keranjang kosong!"); return; }
-    
-    let waNum = document.getElementById("waNumber").value.trim();
-    if(!waNum || waNum === "628") { alert("Isi nomor WhatsApp tujuan dengan benar"); return; }
+// Bersihkan Form
+document.getElementById("clearForm").addEventListener("click", () => {
+    createGramInput();
+    avgText.innerHTML = "-"; modeText.innerHTML = "-"; modeCountText.innerHTML = "gram";
+});
 
-    this.disabled = true;
-    this.innerHTML = "Sedang Memproses...";
+// Hapus Riwayat Lokal
+document.getElementById("deleteAllHistory").addEventListener("click", () => {
+    if(confirm("Hapus semua riwayat lokal hari ini? (Data di spreadsheet tidak ikut terhapus)")) {
+        dailyHistory = [];
+        updateHistoryUI();
+    }
+});
 
-    // 1. FORMAT TEKS UNTUK WA (FITUR LAMA)
-    let outletName = getOutletName(tempCart[0].outletCode);
-    let tgl = new Date().toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+// ================================
+// KIRIM REKAP WA (FITUR LAMA YANG DIINGINKAN)
+// ================================
+document.getElementById("sendRekapWa").addEventListener("click", () => {
+    if(dailyHistory.length === 0) { alert("Belum ada data kalibrasi hari ini untuk direkap."); return; }
     
-    let textWa = `*LAPORAN KALIBRASI QC GACOAN*\n`;
+    let tglFormated = today.toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+    
+    // FORMAT TEKS REKAP WA
+    let textWa = `*REKAP KALIBRASI GACOAN*\n`;
     textWa += `--------------------------------\n`;
-    textWa += `*Outlet:* ${outletName}\n`;
-    textWa += `*Tanggal:* ${tgl}\n`;
-    textWa += `*Total Item:* ${tempCart.length}\n`;
+    textWa += `*Resto:* ${NAMA_RESTO}\n`;
+    textWa += `*Tanggal:* ${tglFormated}\n`;
+    textWa += `*Total Item:* ${dailyHistory.length}\n`;
     textWa += `--------------------------------\n\n`;
 
-    tempCart.forEach((x, i) => {
+    dailyHistory.forEach((x, i) => {
         textWa += `*${i+1}. ${x.item}* (Crew: ${x.crew})\n`;
-        textWa += `Std: ${x.benchmark}g | Avg: *${x.average}g* | Stat: *${x.status}*\n`;
+        textWa += `Shift: ${x.shift} | Jam: ${x.time}\n`;
+        textWa += `Avg: *${x.average} gram* | Modus: *${x.modus}*\n`;
         textWa += `Data: [${x.data}]\n\n`;
     });
-
-    // 2. KIRIM DATA KE SPREADSHEET SATU PER SATU (FITUR BARU)
-    let successCount = 0;
-    for (let itemData of tempCart) {
-        // Susun payload sesuai kebutuhan prepareSheetData sebelumnya
-        let payload = {
-            OUTLETCODE: itemData.outletCode,
-            OUTLETNAME: getOutletName(itemData.outletCode),
-            CREW: itemData.crew,
-            ITEM: itemData.item,
-            BENCHMARK: itemData.benchmark,
-            TRIAL: itemData.data,
-            AVERAGE: itemData.average,
-            DEVIATION: itemData.deviation,
-            STATUS: itemData.status,
-            SCORE: itemData.score
-        };
-
-        try {
-            await fetch(API_URL, {
-                method: "POST",
-                mode: "no-cors",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(payload)
-            });
-            successCount++;
-            console.log(`Item ${itemData.item} terkirim ke Sheet`);
-        } catch(err) {
-            console.error(`Gagal mengirim ${itemData.item}`, err);
-        }
-    }
-
-    alert(`${successCount} data berhasil dikirim ke Spreadsheet.`);
-
-    // 3. BUKA WHATSAPP (FITUR LAMA)
-    let urlWa = `https://api.whatsapp.com/send?phone=${waNum}&text=${encodeURIComponent(textWa)}`;
-    window.open(urlWa, '_blank');
-
-    // 4. RESET SEMUANYA
-    tempCart = [];
-    updateTempTable();
-    tempStorageCard.style.display = "none";
-    document.getElementById("crew").value = "";
     
-    this.disabled = false;
-    this.innerHTML = `<svg width="20" height="20" viewBox="0 0 448 512" fill="white" style="margin-right:8px;"><path d="M380.9 97.1C339 55.1 283.2 32 223.9 32c-122.4 0-222 99.6-222 222 0 39.1 10.2 77.3 29.6 111L3 480l117.7-30.9c32.4 17.7 68.9 27 106.1 27h.1c122.3 0 224.1-99.6 224.1-222 0-59.3-25.2-115-67.1-117zm-157 338.7h-.1c-34 0-67.3-9.2-96.5-26.3L97 435.8l24.6-89.9c-18.7-29.7-28.6-64.1-28.6-99.3 0-108.6 88.4-197 197-197 52.6 0 102 20.5 139.1 57.6s57.6 86.5 57.6 139.1c0 108.6-88.4 197-197 197zm105.1-147.5c-5.8-2.9-34.1-16.8-39.4-18.8-5.3-2-9.1-2.9-13.1 2.9-3.9 5.8-15.3 18.8-18.8 22.7-3.4 3.9-6.9 4.4-12.6 1.5-5.8-2.9-24.3-8.9-46.3-28.5-17.1-15.3-28.7-34.2-32.1-40-3.4-5.8-.4-8.9 2.5-11.8 2.6-2.6 5.8-6.8 8.7-10.1 2.9-3.4 3.9-5.8 5.8-9.6 1.9-3.9.9-7.4-.5-10.3-1.4-2.9-13.1-31.5-18-43.3-4.7-11.5-9.6-9.9-13.1-10.1-3.4-.2-7.3-.2-11.2-.2-3.9 0-10.3 1.5-15.7 7.4-5.4 5.8-20.7 20.3-20.7 49.4 0 29.1 21.2 57.2 24.1 61.2 2.9 3.9 41.5 63.4 100.6 88.9 14.1 6.1 25.1 9.8 33.6 12.5 14.1 4.5 27 3.9 37.1 2.4 11.2-1.7 34.1-13.9 38.9-27.3 4.8-13.4 4.8-24.9 3.4-27.3-1.5-2.4-5.3-3.9-11.2-6.8z"/></svg> Kirim Semua (WA & Spreadsheet)`;
+    textWa += `--------------------------------\n`;
+    textWa += `_Laporan otomatis sistem QC_`;
 
+    // ALUR BARU: Buka WhatsApp picker tanpa phone=
+    let urlWa = `https://api.whatsapp.com/send?text=${encodeURIComponent(textWa)}`;
+    
+    window.open(urlWa, '_blank');
 });
 </script>
 
