@@ -400,6 +400,11 @@
             <option value="MLGSOE">MLGSOE - MALANG SOEKARNO HATTA</option>
             <option value="MLGRON">MLGRON - MALANG RONGGOWARSITO</option>
             <option value="MLGDIR">MLGDIR - MALANG DIRGANTARA</option>
+            <option value="BTUSUP">BTUSUP - BATU WR. SUPRATMAN</option>
+            <option value="MLGSUP">MLGSUP - MALANG SUPRIADI</option>
+            <option value="KPNSUD">KPNSUD - KEPANJEN SUDIRMAN</option>
+            <option value="PSKKAL">PSKKAL - PASURUAN KALI TENGAH</option>
+            <option value="PSKSOE">PSKSOE - PASURUAN SOEKARNO HATTA</option>
         </select>
     </div>
 
