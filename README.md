@@ -1,3 +1,4 @@
+<!DOCTYPE html>
 <html lang="id">
 <head>
     <meta charset="UTF-8">
@@ -399,11 +400,6 @@
             <option value="MLGSOE">MLGSOE - MALANG SOEKARNO HATTA</option>
             <option value="MLGRON">MLGRON - MALANG RONGGOWARSITO</option>
             <option value="MLGDIR">MLGDIR - MALANG DIRGANTARA</option>
-            <option value="BTUSUP">BTUSUP - BATU WR. SUPRATMAN</option>
-            <option value="MLGSUP">MLGSUP - MALANG SUPRIADI</option>
-            <option value="KPNSUD">KPNSUD - KEPANJEN SUDIRMAN</option>
-            <option value="PSKKAL">PSKKAL - PASURUAN KALI TENGAH</option>
-            <option value="PSKSOE">PSKSOE - PASURUAN SOEKARNO HATTA</option>
         </select>
     </div>
 
@@ -536,7 +532,10 @@ const progressCount = document.getElementById("progressCount");
 function getOutletName(code){
     const outlet = {
         MLGMON: "MALANG MONDOROKO", MLGJAK: "MALANG JAKARTA", MLGSOE: "MALANG SOEKARNO HATTA",
-        MLGRON: "MALANG RONGGOWARSITO", MLGDIR: "MALANG DIRGANTARA", BTUSUP: "BATU SUPRATMAN", MLGSUP: "MALANG SUPRIADI", KPNSUD: "KEPANJEN SUDIRMAN", PSKKAL: "PASURUAN KALITENGAH", PSNSOE: "PASURUAN SOEKARNO HATTA"
+        MLGRON: "MALANG RONGGOWARSITO", MLGDIR: "MALANG DIRGANTARA",
+        BTUSUP: "BATU WR. SUPRATMAN", MLGSUP: "MALANG SUPRIADI",
+        KPNSUD: "KEPANJEN SUDIRMAN", PSKKAL: "PASURUAN KALI TENGAH",
+        PSKSOE: "PASURUAN SOEKARNO HATTA"
     };
     return outlet[code] || code;
 }
