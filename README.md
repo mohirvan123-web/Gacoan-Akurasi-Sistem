@@ -400,6 +400,12 @@
             <option value="MLGSOE">MLGSOE - MALANG SOEKARNO HATTA</option>
             <option value="MLGRON">MLGRON - MALANG RONGGOWARSITO</option>
             <option value="MLGDIR">MLGDIR - MALANG DIRGANTARA</option>
+            <option value="BTUSUP">BTUSUP - BATU SUPRATMAN</option>
+            <option value="MLGSUP">MLGSUP - MALANG SUPRIADI</option>
+            <option value="KPNSUD">KPNSUD - KEPANJEN SUDIRMAN</option>
+            <option value="PSNKAL">PSNKAL - PASURUAN KALI TENGAH</option>
+            <option value="PSNSOE">PSNSOE - PASURUAN SOEKARNO HATTA</option>
+            <option value="MLGTLO">MLGTLO - MALANG TLOGOMAS</option>
         </select>
     </div>
 
@@ -534,8 +540,9 @@ function getOutletName(code){
         MLGMON: "MALANG MONDOROKO", MLGJAK: "MALANG JAKARTA", MLGSOE: "MALANG SOEKARNO HATTA",
         MLGRON: "MALANG RONGGOWARSITO", MLGDIR: "MALANG DIRGANTARA",
         BTUSUP: "BATU WR. SUPRATMAN", MLGSUP: "MALANG SUPRIADI",
-        KPNSUD: "KEPANJEN SUDIRMAN", PSKKAL: "PASURUAN KALI TENGAH",
-        PSKSOE: "PASURUAN SOEKARNO HATTA"
+        KPNSUD: "KEPANJEN SUDIRMAN", PSNKAL: "PASURUAN KALI TENGAH",
+        PSNSOE: "PASURUAN SOEKARNO HATTA",
+        MLGTLO: "MALANG TLOGOMAS"
     };
     return outlet[code] || code;
 }
